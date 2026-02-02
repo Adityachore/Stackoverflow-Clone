@@ -2,24 +2,35 @@ import mongoose from "mongoose";
 import user from "../models/auth.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { UAParser } from "ua-parser-js";
+import * as UAParserModule from "ua-parser-js";
+const UAParser = UAParserModule.default || UAParserModule;
 import moment from "moment-timezone";
+import {
+  sendPasswordResetEmail,
+  sendEmailOTP,
+  sendSMSOTP,
+  generateRandomPassword,
+  generateOTP
+} from "../services/notification.js";
+
+// Supported languages
+const SUPPORTED_LANGUAGES = ['English', 'Spanish', 'Hindi', 'Portuguese', 'Chinese', 'French'];
 
 export const Signup = async (req, res) => {
-  const { name, email, password } = req.body;
-
+  const { name, email, password, mobile } = req.body;
+  
   // Validate password strength
   if (!password || password.length < 8) {
     return res.status(400).json({ message: "Password must be at least 8 characters" });
   }
-
+  
   const hasLetter = /[a-zA-Z]/.test(password);
   const hasNumber = /[0-9]/.test(password);
-
+  
   if (!hasLetter || !hasNumber) {
     return res.status(400).json({ message: "Password must contain at least 1 letter and 1 number" });
   }
-
+  
   try {
     const exisitinguser = await user.findOne({ email });
     if (exisitinguser) {
@@ -30,17 +41,18 @@ export const Signup = async (req, res) => {
       name,
       email,
       password: hashpassword,
+      mobile: mobile || '',
     });
     const token = jwt.sign(
       { email: newuser.email, id: newuser._id },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
-
+    
     // Remove password from response
     const userResponse = newuser.toObject();
     delete userResponse.password;
-
+    
     res.status(200).json({ data: userResponse, token });
   } catch (error) {
     console.log(error);
@@ -51,12 +63,8 @@ export const Signup = async (req, res) => {
 
 export const Login = async (req, res) => {
   const { email, password, otp } = req.body;
-  const userAgentString = req.headers['user-agent'];
-  const parser = new UAParser(userAgentString);
-  const result = parser.getResult();
-  const browserName = result.browser.name;
-  const osName = result.os.name;
-  const deviceType = result.device.type; // 'mobile', 'tablet', undefined (desktop)
+  const userAgent = req.headers['user-agent'] || '';
+  const ip = req.headers['x-forwarded-for'] || req.connection?.remoteAddress || req.ip || 'Unknown';
 
   try {
     const exisitinguser = await user.findOne({ email });
@@ -64,65 +72,92 @@ export const Login = async (req, res) => {
       return res.status(404).json({ message: "No account found with this email. Please sign up first." });
     }
 
-    const ispasswordcrct = await bcrypt.compare(
-      password,
-      exisitinguser.password
-    );
+    const ispasswordcrct = await bcrypt.compare(password, exisitinguser.password);
     if (!ispasswordcrct) {
       return res.status(400).json({ message: "Invalid password" });
     }
 
-    // --- Conditional Auth Logic ---
-    const now = moment().tz("Asia/Kolkata");
+    // Parse user agent for login tracking
+    const parser = new UAParser(userAgent);
+    const browserInfo = parser.getBrowser();
+    const osInfo = parser.getOS();
+    const deviceInfo = parser.getDevice();
 
-    // 1. Mobile Restriction (10 AM - 1 PM IST)
+    const browser = browserInfo.name || 'Unknown';
+    const os = osInfo.name || 'Unknown';
+    const deviceType = deviceInfo.type || 'desktop';
+
+    // --- Conditional Authentication Rules ---
+
+    // 1. Mobile devices: Only allowed between 10:00 AM - 1:00 PM IST
     if (deviceType === 'mobile' || deviceType === 'tablet') {
+      const now = moment().tz("Asia/Kolkata");
       const currentHour = now.hour();
+
       if (currentHour < 10 || currentHour >= 13) {
-        return res.status(403).json({ message: "Mobile logins are only allowed between 10:00 AM and 1:00 PM IST." });
+        return res.status(403).json({
+          message: "Mobile login is only allowed between 10:00 AM and 1:00 PM IST.",
+          requiresTimeWindow: true,
+          deviceType
+        });
       }
     }
 
-    // 2. Google Chrome -> OTP Required
-    // If otp is provided, verify it. If not, generate and send it.
-    if (browserName === 'Chrome' && !otp) {
-      // Generate OTP
-      const code = Math.floor(100000 + Math.random() * 900000).toString();
-      exisitinguser.otp = {
-        code,
-        expiresAt: moment().add(5, 'minutes').toDate()
-      };
-      await exisitinguser.save();
+    // 2. Google Chrome: Requires email OTP verification
+    if (browser.toLowerCase().includes('chrome') && !browser.toLowerCase().includes('edge')) {
+      if (!otp) {
+        // Generate and send OTP
+        const otpCode = generateOTP();
+        exisitinguser.otp = {
+          code: otpCode,
+          expiresAt: new Date(Date.now() + 5 * 60 * 1000) // 5 minutes
+        };
+        await exisitinguser.save();
 
-      console.log(`[Mock SMS/Email] OTP for Chrome Login (${email}): ${code}`);
+        await sendEmailOTP(exisitinguser.email, otpCode, 'login verification');
 
-      return res.status(200).json({
-        message: "OTP required for Chrome login.",
-        requiresOtp: true
-      });
-    }
-
-    if (browserName === 'Chrome' && otp) {
-      if (!exisitinguser.otp || exisitinguser.otp.code !== otp || new Date() > exisitinguser.otp.expiresAt) {
-        return res.status(400).json({ message: "Invalid or expired OTP" });
+        return res.status(200).json({
+          message: "OTP sent to your email for verification",
+          requiresOTP: true,
+          otpSentTo: 'email',
+          browser
+        });
       }
-      // OTC verified, clear it
-      exisitinguser.otp = undefined;
+
+      // Verify OTP
+      if (!exisitinguser.otp || !exisitinguser.otp.code) {
+        return res.status(400).json({ message: "Please request OTP first" });
+      }
+
+      if (new Date() > new Date(exisitinguser.otp.expiresAt)) {
+        return res.status(400).json({ message: "OTP has expired. Please request a new one." });
+      }
+
+      if (exisitinguser.otp.code !== otp) {
+        return res.status(400).json({ message: "Invalid OTP" });
+      }
+
+      // Clear OTP after successful verification
+      exisitinguser.otp = { code: null, expiresAt: null };
     }
 
-    // 3. Microsoft Browser -> Direct allowed (implied by falling through)
+    // 3. Microsoft browsers (Edge, IE): Direct login (no OTP required)
 
-    // Update login history
+    // Update last seen and add login history
+    exisitinguser.lastSeen = new Date();
     exisitinguser.loginHistory.push({
-      browser: browserName,
-      os: osName,
-      device: deviceType || 'desktop',
-      ip: req.ip,
+      browser,
+      os,
+      device: deviceType,
+      ip: typeof ip === 'string' ? ip : ip[0],
       loginAt: new Date()
     });
 
-    // Update last seen
-    exisitinguser.lastSeen = new Date();
+    // Keep only last 50 login records
+    if (exisitinguser.loginHistory.length > 50) {
+      exisitinguser.loginHistory = exisitinguser.loginHistory.slice(-50);
+    }
+
     await exisitinguser.save();
 
     const token = jwt.sign(
@@ -134,12 +169,10 @@ export const Login = async (req, res) => {
     // Remove password from response
     const userResponse = exisitinguser.toObject();
     delete userResponse.password;
-    delete userResponse.otp;
-    delete userResponse.loginHistory; // Don't send full history on login return, maybe too large
 
     res.status(200).json({ data: userResponse, token });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).json("something went wrong..");
     return;
   }
@@ -157,22 +190,22 @@ export const getallusers = async (req, res) => {
 
 export const getuserbyid = async (req, res) => {
   const { id } = req.params;
-
+  
   if (!mongoose.Types.ObjectId.isValid(id)) {
     return res.status(400).json({ message: "Invalid user ID" });
   }
-
+  
   try {
     const userData = await user.findByIdAndUpdate(
       id,
       { $inc: { profileViews: 1 } },
       { new: true }
     ).select("-password");
-
+    
     if (!userData) {
       return res.status(404).json({ message: "User not found" });
     }
-
+    
     res.status(200).json({ data: userData });
   } catch (error) {
     res.status(500).json("something went wrong..");
@@ -193,7 +226,7 @@ export const updateprofile = async (req, res) => {
     if (tags !== undefined) updateData.tags = tags;
     if (location !== undefined) updateData.location = location;
     if (website !== undefined) updateData.website = website;
-
+    
     const updateprofile = await user.findByIdAndUpdate(
       _id,
       { $set: updateData },
@@ -211,26 +244,26 @@ export const updateprofile = async (req, res) => {
 export const toggleBookmark = async (req, res) => {
   const { id: userId } = req.params;
   const { questionId } = req.body;
-
+  
   if (!mongoose.Types.ObjectId.isValid(userId)) {
     return res.status(400).json({ message: "Invalid user ID" });
   }
-
+  
   if (!mongoose.Types.ObjectId.isValid(questionId)) {
     return res.status(400).json({ message: "Invalid question ID" });
   }
-
+  
   try {
     const userData = await user.findById(userId);
-
+    
     if (!userData) {
       return res.status(404).json({ message: "User not found" });
     }
-
+    
     const bookmarkIndex = userData.bookmarks.findIndex(
       (b) => b.toString() === questionId
     );
-
+    
     if (bookmarkIndex === -1) {
       // Add bookmark
       userData.bookmarks.push(questionId);
@@ -238,12 +271,12 @@ export const toggleBookmark = async (req, res) => {
       // Remove bookmark
       userData.bookmarks.splice(bookmarkIndex, 1);
     }
-
+    
     await userData.save();
-
+    
     const userResponse = userData.toObject();
     delete userResponse.password;
-
+    
     res.status(200).json({ data: userResponse });
   } catch (error) {
     console.log(error);
@@ -254,18 +287,18 @@ export const toggleBookmark = async (req, res) => {
 // Get user's bookmarked questions
 export const getBookmarks = async (req, res) => {
   const { id: userId } = req.params;
-
+  
   if (!mongoose.Types.ObjectId.isValid(userId)) {
     return res.status(400).json({ message: "Invalid user ID" });
   }
-
+  
   try {
     const userData = await user.findById(userId).populate("bookmarks");
-
+    
     if (!userData) {
       return res.status(404).json({ message: "User not found" });
     }
-
+    
     res.status(200).json({ data: userData.bookmarks });
   } catch (error) {
     console.log(error);
@@ -273,153 +306,331 @@ export const getBookmarks = async (req, res) => {
   }
 };
 
+// --- FORGOT PASSWORD with Daily Limit ---
 export const forgotPassword = async (req, res) => {
   const { email, mobile } = req.body;
-  try {
-    const existingUser = await user.findOne({
-      $or: [{ email: email }, { mobile: mobile }]
-    });
 
-    if (!existingUser) {
-      return res.status(404).json({ message: "User not found" });
+  if (!email && !mobile) {
+    return res.status(400).json({ message: "Please provide email or mobile number" });
+  }
+
+  try {
+    const query = email ? { email } : { mobile };
+    const userData = await user.findOne(query);
+
+    if (!userData) {
+      return res.status(404).json({ message: "No account found with this email/mobile" });
     }
 
-    // Check Daily Limit
+    // Check daily limit
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    let resetData = existingUser.lastPasswordReset || { count: 0, date: null };
+    const lastReset = userData.lastPasswordReset?.date;
+    const resetCount = userData.lastPasswordReset?.count || 0;
 
-    if (resetData.date) {
-      const resetDate = new Date(resetData.date);
-      resetDate.setHours(0, 0, 0, 0);
-
-      if (resetDate.getTime() === today.getTime()) {
-        if (resetData.count >= 1) {
-          return res.status(400).json({
-            message: "Warning: Password reset limit reached. You can only reset your password once per day."
-          });
-        }
-      } else {
-        // New day, reset count
-        resetData.count = 0;
+    if (lastReset && new Date(lastReset) >= today) {
+      if (resetCount >= 1) {
+        return res.status(429).json({
+          message: "Warning: You have already reset your password today. Please try again tomorrow.",
+          isWarning: true
+        });
       }
-    } else {
-      resetData.count = 0;
     }
 
-    // Generate Random Password (Upper + Lower case only)
-    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    let newPassword = "";
-    for (let i = 0; i < 10; i++) {
-      newPassword += charset.charAt(Math.floor(Math.random() * charset.length));
-    }
-
+    // Generate random password (letters only as per requirement)
+    const newPassword = generateRandomPassword(12);
     const hashedPassword = await bcrypt.hash(newPassword, 12);
 
-    existingUser.password = hashedPassword;
-    existingUser.lastPasswordReset = {
+    userData.password = hashedPassword;
+    userData.lastPasswordReset = {
       date: new Date(),
-      count: resetData.count + 1
+      count: (lastReset && new Date(lastReset) >= today) ? resetCount + 1 : 1
     };
 
-    await existingUser.save();
+    await userData.save();
+    await sendPasswordResetEmail(userData.email, newPassword);
 
-    // Mock Sending Email/SMS
-    console.log(`[Mock Service] Password Reset for ${existingUser.email}. New Password: ${newPassword}`);
-
-    res.status(200).json({ message: "Password reset successful. Check your email/phone." });
+    res.status(200).json({
+      message: "A new password has been sent to your registered email address.",
+      resetCount: userData.lastPasswordReset.count
+    });
 
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).json({ message: "Something went wrong" });
   }
 };
 
+// --- TRANSFER POINTS ---
 export const transferPoints = async (req, res) => {
-  const { id: senderId } = req.params; // or req.userid if self
+  const { id: senderId } = req.params;
   const { recipientId, amount } = req.body;
 
-  if (amount <= 0) return res.status(400).json({ message: "Invalid amount" });
+  if (!mongoose.Types.ObjectId.isValid(senderId) || !mongoose.Types.ObjectId.isValid(recipientId)) {
+    return res.status(400).json({ message: "Invalid user ID" });
+  }
+
+  if (!amount || amount <= 0) {
+    return res.status(400).json({ message: "Please provide a valid amount" });
+  }
+
+  if (senderId === recipientId) {
+    return res.status(400).json({ message: "Cannot transfer points to yourself" });
+  }
 
   try {
     const sender = await user.findById(senderId);
     const recipient = await user.findById(recipientId);
 
-    if (!sender || !recipient) return res.status(404).json({ message: "User not found" });
+    if (!sender || !recipient) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
     if (sender.points <= 10) {
-      return res.status(400).json({ message: "You must have more than 10 points to transfer." });
+      return res.status(400).json({
+        message: "You need more than 10 points to transfer. Your current points: " + sender.points
+      });
     }
 
     if (sender.points < amount) {
-      return res.status(400).json({ message: "Insufficient points." });
+      return res.status(400).json({
+        message: `Insufficient points. You have ${sender.points} points.`
+      });
+    }
+
+    const maxTransfer = sender.points - 10;
+    if (amount > maxTransfer) {
+      return res.status(400).json({
+        message: `You can transfer maximum ${maxTransfer} points (must keep at least 10).`
+      });
     }
 
     sender.points -= amount;
-    recipient.points += Number(amount); // Ensure number
+    recipient.points += amount;
 
     await sender.save();
     await recipient.save();
 
-    res.status(200).json({ message: "Points transferred successfully", balance: sender.points });
+    res.status(200).json({
+      message: `Successfully transferred ${amount} points to ${recipient.name}`,
+      senderPoints: sender.points,
+      recipientPoints: recipient.points
+    });
 
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: "Something went wrong" });
   }
 };
 
+// --- LANGUAGE CHANGE with OTP ---
 export const initiateLanguageChange = async (req, res) => {
-  const { id } = req.params;
+  const { id: userId } = req.params;
   const { language } = req.body;
 
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    return res.status(400).json({ message: "Invalid user ID" });
+  }
+
+  if (!SUPPORTED_LANGUAGES.includes(language)) {
+    return res.status(400).json({
+      message: `Unsupported language. Supported: ${SUPPORTED_LANGUAGES.join(', ')}`
+    });
+  }
+
   try {
-    const userDoc = await user.findById(id);
-    if (!userDoc) return res.status(404).json({ message: "User not found" });
+    const userData = await user.findById(userId);
 
-    // Generate OTP
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    if (!userData) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-    userDoc.otp = {
-      code,
-      expiresAt: moment().add(5, 'minutes').toDate()
+    const otpCode = generateOTP();
+    userData.otp = {
+      code: otpCode,
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000)
     };
 
-    await userDoc.save();
+    await userData.save();
 
     if (language === 'French') {
-      console.log(`[Mock Email] OTP for Language Change (French) to ${userDoc.email}: ${code}`);
-      res.status(200).json({ message: `OTP sent to email (Required for ${language}).` });
+      await sendEmailOTP(userData.email, otpCode, `language change to ${language}`);
+      res.status(200).json({
+        message: `OTP sent to your email (${userData.email}) for language change to French`,
+        otpSentTo: 'email'
+      });
     } else {
-      console.log(`[Mock SMS] OTP for Language Change (${language}) to ${userDoc.mobile || 'Registered Mobile'}: ${code}`);
-      res.status(200).json({ message: "OTP sent to mobile." });
+      if (!userData.mobile) {
+        return res.status(400).json({
+          message: "Mobile number not registered. Please update your profile to change to this language."
+        });
+      }
+      await sendSMSOTP(userData.mobile, otpCode, `language change to ${language}`);
+      res.status(200).json({
+        message: `OTP sent to your mobile for language change`,
+        otpSentTo: 'sms'
+      });
     }
 
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: "Something went wrong" });
   }
 };
 
 export const confirmLanguageChange = async (req, res) => {
-  const { id } = req.params;
+  const { id: userId } = req.params;
   const { otp, language } = req.body;
 
-  try {
-    const userDoc = await user.findById(id);
-    if (!userDoc) return res.status(404).json({ message: "User not found" });
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    return res.status(400).json({ message: "Invalid user ID" });
+  }
 
-    if (!userDoc.otp || userDoc.otp.code !== otp || new Date() > userDoc.otp.expiresAt) {
-      return res.status(400).json({ message: "Invalid or expired OTP" });
+  if (!otp) {
+    return res.status(400).json({ message: "OTP is required" });
+  }
+
+  if (!SUPPORTED_LANGUAGES.includes(language)) {
+    return res.status(400).json({ message: "Unsupported language" });
+  }
+
+  try {
+    const userData = await user.findById(userId);
+
+    if (!userData) {
+      return res.status(404).json({ message: "User not found" });
     }
 
-    userDoc.language = language;
-    userDoc.otp = undefined; // Clear OTP
+    if (!userData.otp || !userData.otp.code) {
+      return res.status(400).json({ message: "Please request OTP first" });
+    }
 
-    await userDoc.save();
+    if (new Date() > new Date(userData.otp.expiresAt)) {
+      return res.status(400).json({ message: "OTP has expired. Please request a new one." });
+    }
 
-    res.status(200).json({ message: `Language successfully changed to ${language}` });
+    if (userData.otp.code !== otp) {
+      return res.status(400).json({ message: "Invalid OTP" });
+    }
+
+    userData.language = language;
+    userData.otp = { code: null, expiresAt: null };
+
+    await userData.save();
+
+    res.status(200).json({
+      message: `Language successfully changed to ${language}`,
+      language: userData.language
+    });
 
   } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Something went wrong" });
+  }
+};
+
+// --- GET LOGIN HISTORY ---
+export const getLoginHistory = async (req, res) => {
+  const { id: userId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    return res.status(400).json({ message: "Invalid user ID" });
+  }
+
+  try {
+    const userData = await user.findById(userId).select('loginHistory');
+
+    if (!userData) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const sortedHistory = (userData.loginHistory || []).sort(
+      (a, b) => new Date(b.loginAt) - new Date(a.loginAt)
+    );
+
+    res.status(200).json({
+      data: sortedHistory,
+      total: sortedHistory.length
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Something went wrong" });
+  }
+};
+
+// --- ADD/REMOVE FRIEND ---
+export const addFriend = async (req, res) => {
+  const { id: userId } = req.params;
+  const { friendId } = req.body;
+
+  if (!mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(friendId)) {
+    return res.status(400).json({ message: "Invalid user ID" });
+  }
+
+  if (userId === friendId) {
+    return res.status(400).json({ message: "Cannot add yourself as a friend" });
+  }
+
+  try {
+    const userData = await user.findById(userId);
+    const friendData = await user.findById(friendId);
+
+    if (!userData || !friendData) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (userData.friends.includes(friendId)) {
+      return res.status(400).json({ message: "Already friends" });
+    }
+
+    userData.friends.push(friendId);
+    friendData.friends.push(userId);
+
+    await userData.save();
+    await friendData.save();
+
+    res.status(200).json({
+      message: `You are now friends with ${friendData.name}`,
+      friendCount: userData.friends.length
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Something went wrong" });
+  }
+};
+
+export const removeFriend = async (req, res) => {
+  const { id: userId } = req.params;
+  const { friendId } = req.body;
+
+  if (!mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(friendId)) {
+    return res.status(400).json({ message: "Invalid user ID" });
+  }
+
+  try {
+    const userData = await user.findById(userId);
+    const friendData = await user.findById(friendId);
+
+    if (!userData || !friendData) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    userData.friends = userData.friends.filter(f => f !== friendId);
+    friendData.friends = friendData.friends.filter(f => f !== userId);
+
+    await userData.save();
+    await friendData.save();
+
+    res.status(200).json({
+      message: `Removed ${friendData.name} from friends`,
+      friendCount: userData.friends.length
+    });
+
+  } catch (error) {
+    console.error(error);
     res.status(500).json({ message: "Something went wrong" });
   }
 };

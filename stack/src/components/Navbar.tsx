@@ -3,6 +3,7 @@ import { Menu, Search } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import LanguageSwitcher from "./LanguageSwitcher";
 
 // const User = {
 //   _id: "1",
@@ -83,6 +84,7 @@ const Navbar = ({ handleslidein }: any) => {
           </form>
         </div>
         <div className="flex items-center gap-2">
+          <LanguageSwitcher variant="icon" />
           {!hasMounted ? null : !user ? (
             <Link
               href="/auth"

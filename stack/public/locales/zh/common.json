@@ -1,0 +1,77 @@
+{
+  "common": {
+    "login": "登录",
+    "signup": "注册",
+    "logout": "登出",
+    "email": "电子邮件",
+    "password": "密码",
+    "submit": "提交",
+    "cancel": "取消",
+    "save": "保存",
+    "delete": "删除",
+    "edit": "编辑",
+    "loading": "加载中...",
+    "error": "错误",
+    "success": "成功"
+  },
+  "nav": {
+    "home": "首页",
+    "questions": "问题",
+    "tags": "标签",
+    "users": "用户",
+    "ask": "提问",
+    "profile": "个人资料",
+    "subscription": "订阅",
+    "social": "社交动态"
+  },
+  "auth": {
+    "loginTitle": "登录您的账户",
+    "signupTitle": "创建您的账户",
+    "forgotPassword": "忘记密码？",
+    "noAccount": "没有账户？",
+    "haveAccount": "已有账户？",
+    "otpRequired": "需要OTP验证",
+    "otpSent": "OTP已发送至您的邮箱",
+    "enterOtp": "输入6位数OTP",
+    "verifyOtp": "验证OTP",
+    "mobileTimeRestriction": "移动端登录仅限于印度时间上午10:00至下午1:00",
+    "chromeOtpInfo": "Chrome浏览器需要OTP验证以确保安全"
+  },
+  "subscription": {
+    "title": "选择您的套餐",
+    "subtitle": "升级以提出更多问题并解锁高级功能",
+    "paymentWindow": "支付时间：每天印度时间10:00 - 11:00",
+    "currentPlan": "当前套餐",
+    "subscribe": "立即订阅",
+    "free": "免费",
+    "bronze": "青铜",
+    "silver": "白银",
+    "gold": "黄金",
+    "questionsPerDay": "问题/天",
+    "unlimited": "无限"
+  },
+  "social": {
+    "createPost": "创建帖子",
+    "postingLimit": "基于好友数量的发帖限制",
+    "noFriends": "添加好友以开始发帖",
+    "like": "点赞",
+    "comment": "评论",
+    "share": "分享"
+  },
+  "profile": {
+    "editProfile": "编辑资料",
+    "transferPoints": "转移积分",
+    "changeLanguage": "更改语言",
+    "loginHistory": "登录历史",
+    "reputation": "声望",
+    "points": "积分",
+    "badges": "徽章",
+    "questions": "问题",
+    "answers": "回答"
+  },
+  "password": {
+    "resetTitle": "忘记密码",
+    "resetSuccess": "新密码已发送至您的邮箱",
+    "dailyLimitWarning": "您今天已经重置过密码。请明天再试。"
+  }
+}

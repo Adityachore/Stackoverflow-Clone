@@ -11,6 +11,9 @@ import {
   transferPoints,
   initiateLanguageChange,
   confirmLanguageChange,
+  getLoginHistory,
+  addFriend,
+  removeFriend,
 } from "../controller/auth.js";
 
 const router = express.Router();
@@ -27,5 +30,8 @@ router.post("/forgot-password", forgotPassword);
 router.post("/transfer-points/:id", auth, transferPoints);
 router.post("/language/initiate/:id", auth, initiateLanguageChange);
 router.post("/language/confirm/:id", auth, confirmLanguageChange);
+router.get("/login-history/:id", auth, getLoginHistory);
+router.post("/friend/add/:id", auth, addFriend);
+router.post("/friend/remove/:id", auth, removeFriend);
 
 export default router;

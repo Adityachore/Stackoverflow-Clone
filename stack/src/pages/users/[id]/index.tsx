@@ -176,7 +176,7 @@ const index = () => {
 
   const handleInitiateLang = async () => {
     try {
-      const { data } = await import("@/lib/api").then(mod => mod.initiateLanguageChange(user?._id, { language: selectedLang }));
+      const { data } = await import("@/lib/api").then(mod => mod.initiateLanguageChange(selectedLang));
       toast.success(data.message);
       setOtpSent(true);
     } catch (err: any) {
@@ -186,7 +186,7 @@ const index = () => {
 
   const handleConfirmLang = async () => {
     try {
-      const { data } = await import("@/lib/api").then(mod => mod.confirmLanguageChange(user?._id, { otp, language: selectedLang }));
+      const { data } = await import("@/lib/api").then(mod => mod.confirmLanguageChange(selectedLang, otp));
       toast.success(data.message);
       setOtpSent(false);
       setOtp("");
@@ -287,7 +287,7 @@ const index = () => {
                         <div className="flex flex-wrap gap-2">
                           {editForm.tags.map(tag => (
                             <Badge key={tag} variant="secondary" className="bg-orange-100 text-orange-800 flex items-center gap-1">
-                              {tag} <button onClick={() => handleRemoveTag(tag)} className="ml-1 hover:text-red-600"><X className="w-3 h-3" /></button>
+                              {tag} <button aria-label="Remove tag" onClick={() => handleRemoveTag(tag)} className="ml-1 hover:text-red-600"><X className="w-3 h-3" /></button>
                             </Badge>
                           ))}
                         </div>
@@ -313,7 +313,7 @@ const index = () => {
                       {!otpSent ? (
                         <>
                           <Label>Select Language</Label>
-                          <select className="w-full border p-2 rounded" value={selectedLang} onChange={(e) => setSelectedLang(e.target.value)}>
+                          <select aria-label="Select language" className="w-full border p-2 rounded" value={selectedLang} onChange={(e) => setSelectedLang(e.target.value)}>
                             <option value="English">English</option>
                             <option value="French">French</option>
                             <option value="Spanish">Spanish</option>
@@ -427,28 +427,55 @@ const index = () => {
         {/* Login History (Own Profile) */}
         {isOwnProfile && users.loginHistory && users.loginHistory.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-xl font-bold mb-4">Login History (Last 5)</h2>
-            <div className="bg-white rounded overflow-hidden shadow">
-              <table className="min-w-full text-sm">
-                <thead className="bg-gray-100">
-                  <tr>
-                    <th className="p-3 text-left">Device</th>
-                    <th className="p-3 text-left">Browser</th>
-                    <th className="p-3 text-left">IP</th>
-                    <th className="p-3 text-left">Time</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.loginHistory.slice(-5).reverse().map((h: any, i: number) => (
-                    <tr key={i} className="border-b">
-                      <td className="p-3 capitalize">{h.device || 'Desktop'}</td>
-                      <td className="p-3">{h.browser || h.os || 'Unknown'}</td>
-                      <td className="p-3">{h.ip}</td>
-                      <td className="p-3">{new Date(h.loginAt).toLocaleString()}</td>
+            <h2 className="text-xl font-bold mb-4">Login History</h2>
+            <div className="bg-white rounded-lg overflow-hidden shadow border">
+              {/* Tabs */}
+              <div className="flex border-b">
+                <button className="px-4 py-3 text-sm font-medium text-blue-600 border-b-2 border-blue-600 bg-blue-50">
+                  Recent Logins
+                </button>
+                <button className="px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-50">
+                  Desktop ({users.loginHistory.filter((h: any) => h.device === 'desktop' || !h.device).length})
+                </button>
+                <button className="px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-50">
+                  Mobile ({users.loginHistory.filter((h: any) => h.device === 'mobile' || h.device === 'tablet').length})
+                </button>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="p-3 text-left font-semibold text-gray-600">Device</th>
+                      <th className="p-3 text-left font-semibold text-gray-600">Browser</th>
+                      <th className="p-3 text-left font-semibold text-gray-600">OS</th>
+                      <th className="p-3 text-left font-semibold text-gray-600">IP Address</th>
+                      <th className="p-3 text-left font-semibold text-gray-600">Date & Time</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {users.loginHistory.slice(-10).reverse().map((h: any, i: number) => (
+                      <tr key={i} className="border-b hover:bg-gray-50">
+                        <td className="p-3">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            h.device === 'mobile' ? 'bg-purple-100 text-purple-800' :
+                            h.device === 'tablet' ? 'bg-orange-100 text-orange-800' :
+                            'bg-blue-100 text-blue-800'
+                          }`}>
+                            {h.device === 'mobile' ? '📱 Mobile' : h.device === 'tablet' ? '📱 Tablet' : '💻 Desktop'}
+                          </span>
+                        </td>
+                        <td className="p-3">{h.browser || 'Unknown'}</td>
+                        <td className="p-3">{h.os || 'Unknown'}</td>
+                        <td className="p-3 font-mono text-xs">{h.ip}</td>
+                        <td className="p-3 text-gray-600">{new Date(h.loginAt).toLocaleString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="p-3 bg-gray-50 border-t text-xs text-gray-500">
+                <p>🔒 <strong>Security Info:</strong> Chrome requires OTP • Mobile login: 10AM-1PM IST only • Edge/IE: Direct login</p>
+              </div>
             </div>
           </div>
         )}

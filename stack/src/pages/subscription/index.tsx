@@ -1,91 +1,205 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Mainlayout from "@/layout/Mainlayout";
-import { subscribe } from "@/lib/api";
+import { subscribe, getSubscriptionStatus } from "@/lib/api";
 import { toast } from "react-toastify";
-import { Check } from "lucide-react";
+import { Check, Crown, Sparkles, Zap, Clock } from "lucide-react";
+import { useAuth } from "@/lib/AuthContext";
 
 /**
  * Plans data
  */
 const PLANS = [
     {
+        id: "free",
+        name: "Free",
+        price: "₹0/mo",
+        limit: "1 Question/Day",
+        features: ["Community Support", "Basic Features"],
+        color: "gray"
+    },
+    {
         id: "bronze",
         name: "Bronze",
         price: "₹100/mo",
         limit: "5 Questions/Day",
-        features: ["Basic Support", "Standard Visibility"]
+        features: ["Basic Support", "Standard Visibility", "Email Notifications"],
+        color: "amber"
     },
     {
         id: "silver",
         name: "Silver",
         price: "₹300/mo",
         limit: "10 Questions/Day",
-        features: ["Priority Support", "High Visibility", "Profile Badge"]
+        features: ["Priority Support", "High Visibility", "Profile Badge", "Analytics Dashboard"],
+        color: "slate"
     },
     {
         id: "gold",
         name: "Gold",
         price: "₹1000/mo",
         limit: "Unlimited Questions",
-        features: ["24/7 Support", "Top Visibility", "Gold Profile Badge", "Ad-free"]
+        features: ["24/7 Support", "Top Visibility", "Gold Profile Badge", "Ad-free Experience", "Early Access Features"],
+        color: "yellow"
     }
 ];
 
 const SubscriptionPage = () => {
+    const { user } = useAuth();
+    const [currentPlan, setCurrentPlan] = useState<string>("free");
+    const [loading, setLoading] = useState(false);
+    const [subscriptionStatus, setSubscriptionStatus] = useState<any>(null);
+
+    useEffect(() => {
+        const fetchStatus = async () => {
+            try {
+                const { data } = await getSubscriptionStatus();
+                setSubscriptionStatus(data);
+                setCurrentPlan(data.subscription?.plan || 'free');
+            } catch (err) {
+                // Not logged in or error
+            }
+        };
+        if (user) fetchStatus();
+    }, [user]);
 
     const handleSubscribe = async (planId: string) => {
+        if (planId === 'free') {
+            toast.info("You are already on the Free plan.");
+            return;
+        }
+        
+        if (!user) {
+            toast.error("Please login to subscribe.");
+            return;
+        }
+
+        setLoading(true);
         try {
             const { data } = await subscribe({ plan: planId });
             toast.success(data.message);
+            setCurrentPlan(planId);
+            setSubscriptionStatus(data);
         } catch (err: any) {
-            toast.error(err.response?.data?.message || "Subscription failed. Check payment window (10-11 AM IST).");
+            const message = err.response?.data?.message || "Subscription failed.";
+            if (message.includes("10:00 AM")) {
+                toast.error(`⏰ ${message}`);
+            } else {
+                toast.error(message);
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const getIcon = (planId: string) => {
+        switch(planId) {
+            case 'gold': return <Crown className="w-6 h-6 text-yellow-500" />;
+            case 'silver': return <Sparkles className="w-6 h-6 text-gray-400" />;
+            case 'bronze': return <Zap className="w-6 h-6 text-amber-600" />;
+            default: return null;
         }
     };
 
     return (
         <Mainlayout>
-            <div className="max-w-5xl mx-auto p-6">
+            <div className="max-w-6xl mx-auto p-6">
                 <div className="text-center mb-10">
-                    <h1 className="text-3xl font-bold mb-4">Upgrade Your Plan</h1>
-                    <p className="text-gray-600">Choose a plan that fits your needs.
-                        <br /><span className="text-sm bg-yellow-100 px-2 py-1 rounded mt-2 inline-block">Note: Payment window is 10:00 AM - 11:00 AM IST daily.</span>
+                    <h1 className="text-3xl font-bold mb-4">Choose Your Plan</h1>
+                    <p className="text-gray-600 mb-4">
+                        Upgrade to ask more questions and unlock premium features.
                     </p>
+                    <div className="inline-flex items-center gap-2 bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-2 rounded-lg text-sm">
+                        <Clock className="w-4 h-4" />
+                        <span><strong>Payment Window:</strong> 10:00 AM - 11:00 AM IST daily</span>
+                    </div>
                 </div>
 
-                <div className="grid md:grid-cols-3 gap-8">
-                    {PLANS.map((plan) => (
-                        <div key={plan.id} className={`border rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow relative ${plan.id === 'gold' ? 'border-yellow-400 bg-yellow-50' : 'bg-white'}`}>
-                            {plan.id === 'gold' && (
-                                <div className="absolute top-0 right-0 bg-yellow-400 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-xl">
-                                    RECOMMENDED
-                                </div>
+                {subscriptionStatus && currentPlan !== 'free' && (
+                    <div className="mb-8 p-4 bg-green-50 border border-green-200 rounded-lg text-center">
+                        <p className="text-green-800">
+                            ✅ You are currently on the <strong className="uppercase">{currentPlan}</strong> plan.
+                            {subscriptionStatus.subscription?.validUntil && (
+                                <span> Valid until: {new Date(subscriptionStatus.subscription.validUntil).toLocaleDateString()}</span>
                             )}
-                            <h3 className="text-xl font-bold mb-2 uppercase tracking-wide text-gray-700">{plan.name}</h3>
-                            <div className="text-3xl font-bold mb-4 text-blue-600">{plan.price}</div>
-                            <div className="mb-6 font-medium text-gray-900 border-b pb-4">
-                                {plan.limit}
-                            </div>
+                        </p>
+                    </div>
+                )}
 
-                            <ul className="mb-8 space-y-3">
-                                {plan.features.map((f) => (
-                                    <li key={f} className="flex items-center text-sm text-gray-600">
-                                        <Check className="w-4 h-4 mr-2 text-green-500" />
-                                        {f}
-                                    </li>
-                                ))}
-                            </ul>
-
-                            <button
-                                onClick={() => handleSubscribe(plan.id)}
-                                className={`w-full py-2 rounded-lg font-bold transition-colors ${plan.id === 'gold'
-                                        ? 'bg-yellow-500 hover:bg-yellow-600 text-white'
-                                        : 'bg-blue-600 hover:bg-blue-700 text-white'
-                                    }`}
+                <div className="grid md:grid-cols-4 gap-6">
+                    {PLANS.map((plan) => {
+                        const isCurrentPlan = currentPlan === plan.id;
+                        const isGold = plan.id === 'gold';
+                        
+                        return (
+                            <div 
+                                key={plan.id} 
+                                className={`relative border rounded-xl p-6 transition-all duration-300 ${
+                                    isGold 
+                                        ? 'border-yellow-400 bg-gradient-to-b from-yellow-50 to-white shadow-lg scale-105' 
+                                        : isCurrentPlan 
+                                            ? 'border-green-400 bg-green-50' 
+                                            : 'bg-white hover:shadow-md'
+                                }`}
                             >
-                                Subscribe Now
-                            </button>
-                        </div>
-                    ))}
+                                {isGold && (
+                                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-yellow-400 text-white text-xs font-bold px-3 py-1 rounded-full">
+                                        BEST VALUE
+                                    </div>
+                                )}
+                                
+                                {isCurrentPlan && (
+                                    <div className="absolute -top-3 right-4 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                                        CURRENT
+                                    </div>
+                                )}
+
+                                <div className="flex items-center gap-2 mb-4">
+                                    {getIcon(plan.id)}
+                                    <h3 className="text-xl font-bold uppercase tracking-wide text-gray-700">
+                                        {plan.name}
+                                    </h3>
+                                </div>
+
+                                <div className={`text-3xl font-bold mb-2 ${isGold ? 'text-yellow-600' : 'text-blue-600'}`}>
+                                    {plan.price}
+                                </div>
+
+                                <div className="mb-6 font-medium text-gray-900 border-b pb-4">
+                                    {plan.limit}
+                                </div>
+
+                                <ul className="mb-8 space-y-3">
+                                    {plan.features.map((f) => (
+                                        <li key={f} className="flex items-center text-sm text-gray-600">
+                                            <Check className={`w-4 h-4 mr-2 ${isGold ? 'text-yellow-500' : 'text-green-500'}`} />
+                                            {f}
+                                        </li>
+                                    ))}
+                                </ul>
+
+                                <button
+                                    onClick={() => handleSubscribe(plan.id)}
+                                    disabled={loading || isCurrentPlan || plan.id === 'free'}
+                                    className={`w-full py-2 rounded-lg font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                                        isGold
+                                            ? 'bg-yellow-500 hover:bg-yellow-600 text-white'
+                                            : isCurrentPlan
+                                                ? 'bg-green-100 text-green-700 cursor-default'
+                                                : plan.id === 'free'
+                                                    ? 'bg-gray-100 text-gray-500'
+                                                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                                    }`}
+                                >
+                                    {isCurrentPlan ? 'Current Plan' : plan.id === 'free' ? 'Default' : 'Subscribe Now'}
+                                </button>
+                            </div>
+                        );
+                    })}
+                </div>
+
+                <div className="mt-12 text-center text-sm text-gray-500">
+                    <p>📧 Invoice will be sent to your registered email after successful payment.</p>
+                    <p className="mt-2">Need help? Contact support@stackoverflow-clone.com</p>
                 </div>
             </div>
         </Mainlayout>

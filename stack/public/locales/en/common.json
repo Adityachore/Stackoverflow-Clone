@@ -1,0 +1,77 @@
+{
+  "common": {
+    "login": "Log in",
+    "signup": "Sign up",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success"
+  },
+  "nav": {
+    "home": "Home",
+    "questions": "Questions",
+    "tags": "Tags",
+    "users": "Users",
+    "ask": "Ask Question",
+    "profile": "Profile",
+    "subscription": "Subscription",
+    "social": "Social Feed"
+  },
+  "auth": {
+    "loginTitle": "Log in to your account",
+    "signupTitle": "Create your account",
+    "forgotPassword": "Forgot your password?",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?",
+    "otpRequired": "OTP verification required",
+    "otpSent": "OTP sent to your email",
+    "enterOtp": "Enter 6-digit OTP",
+    "verifyOtp": "Verify OTP",
+    "mobileTimeRestriction": "Mobile login is only allowed between 10:00 AM and 1:00 PM IST",
+    "chromeOtpInfo": "Chrome browser requires OTP verification for security"
+  },
+  "subscription": {
+    "title": "Choose Your Plan",
+    "subtitle": "Upgrade to ask more questions and unlock premium features",
+    "paymentWindow": "Payment Window: 10:00 AM - 11:00 AM IST daily",
+    "currentPlan": "Current Plan",
+    "subscribe": "Subscribe Now",
+    "free": "Free",
+    "bronze": "Bronze",
+    "silver": "Silver",
+    "gold": "Gold",
+    "questionsPerDay": "Questions/Day",
+    "unlimited": "Unlimited"
+  },
+  "social": {
+    "createPost": "Create Post",
+    "postingLimit": "Posting limit based on friends",
+    "noFriends": "Add friends to start posting",
+    "like": "Like",
+    "comment": "Comment",
+    "share": "Share"
+  },
+  "profile": {
+    "editProfile": "Edit Profile",
+    "transferPoints": "Transfer Points",
+    "changeLanguage": "Change Language",
+    "loginHistory": "Login History",
+    "reputation": "Reputation",
+    "points": "Points",
+    "badges": "Badges",
+    "questions": "Questions",
+    "answers": "Answers"
+  },
+  "password": {
+    "resetTitle": "Forgot Password",
+    "resetSuccess": "A new password has been sent to your email",
+    "dailyLimitWarning": "You have already reset your password today. Please try again tomorrow."
+  }
+}

@@ -1,5 +1,7 @@
-import express from "express";
 import dotenv from "dotenv";
+dotenv.config();
+
+import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
 import userroutes from "./routes/auth.js"
@@ -8,8 +10,8 @@ import answerroutes from "./routes/answer.js"
 import challengeroutes from "./routes/challenge.js"
 import socialroutes from "./routes/social.js"
 import subscriptionroutes from "./routes/subscription.js"
+
 const app = express();
-dotenv.config();
 app.use(express.json({ limit: "30mb", extended: true }));
 app.use(express.urlencoded({ limit: "30mb", extended: true }));
 app.use(cors());

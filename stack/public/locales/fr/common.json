@@ -1,0 +1,77 @@
+{
+  "common": {
+    "login": "Connexion",
+    "signup": "S'inscrire",
+    "logout": "Déconnexion",
+    "email": "E-mail",
+    "password": "Mot de passe",
+    "submit": "Soumettre",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès"
+  },
+  "nav": {
+    "home": "Accueil",
+    "questions": "Questions",
+    "tags": "Tags",
+    "users": "Utilisateurs",
+    "ask": "Poser une question",
+    "profile": "Profil",
+    "subscription": "Abonnement",
+    "social": "Fil social"
+  },
+  "auth": {
+    "loginTitle": "Connectez-vous à votre compte",
+    "signupTitle": "Créez votre compte",
+    "forgotPassword": "Mot de passe oublié?",
+    "noAccount": "Pas de compte?",
+    "haveAccount": "Vous avez déjà un compte?",
+    "otpRequired": "Vérification OTP requise",
+    "otpSent": "OTP envoyé à votre e-mail",
+    "enterOtp": "Entrez l'OTP à 6 chiffres",
+    "verifyOtp": "Vérifier l'OTP",
+    "mobileTimeRestriction": "La connexion mobile n'est autorisée qu'entre 10h00 et 13h00 IST",
+    "chromeOtpInfo": "Le navigateur Chrome nécessite une vérification OTP pour la sécurité"
+  },
+  "subscription": {
+    "title": "Choisissez votre forfait",
+    "subtitle": "Passez à un forfait supérieur pour poser plus de questions et débloquer des fonctionnalités premium",
+    "paymentWindow": "Fenêtre de paiement: 10h00 - 11h00 IST quotidiennement",
+    "currentPlan": "Forfait actuel",
+    "subscribe": "S'abonner maintenant",
+    "free": "Gratuit",
+    "bronze": "Bronze",
+    "silver": "Argent",
+    "gold": "Or",
+    "questionsPerDay": "Questions/Jour",
+    "unlimited": "Illimité"
+  },
+  "social": {
+    "createPost": "Créer une publication",
+    "postingLimit": "Limite de publication basée sur les amis",
+    "noFriends": "Ajoutez des amis pour commencer à publier",
+    "like": "J'aime",
+    "comment": "Commenter",
+    "share": "Partager"
+  },
+  "profile": {
+    "editProfile": "Modifier le profil",
+    "transferPoints": "Transférer des points",
+    "changeLanguage": "Changer de langue",
+    "loginHistory": "Historique de connexion",
+    "reputation": "Réputation",
+    "points": "Points",
+    "badges": "Badges",
+    "questions": "Questions",
+    "answers": "Réponses"
+  },
+  "password": {
+    "resetTitle": "Mot de passe oublié",
+    "resetSuccess": "Un nouveau mot de passe a été envoyé à votre e-mail",
+    "dailyLimitWarning": "Vous avez déjà réinitialisé votre mot de passe aujourd'hui. Veuillez réessayer demain."
+  }
+}

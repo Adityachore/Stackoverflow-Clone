@@ -1,0 +1,77 @@
+{
+  "common": {
+    "login": "Iniciar sesión",
+    "signup": "Registrarse",
+    "logout": "Cerrar sesión",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "submit": "Enviar",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito"
+  },
+  "nav": {
+    "home": "Inicio",
+    "questions": "Preguntas",
+    "tags": "Etiquetas",
+    "users": "Usuarios",
+    "ask": "Hacer pregunta",
+    "profile": "Perfil",
+    "subscription": "Suscripción",
+    "social": "Feed Social"
+  },
+  "auth": {
+    "loginTitle": "Inicia sesión en tu cuenta",
+    "signupTitle": "Crea tu cuenta",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "noAccount": "¿No tienes una cuenta?",
+    "haveAccount": "¿Ya tienes una cuenta?",
+    "otpRequired": "Se requiere verificación OTP",
+    "otpSent": "OTP enviado a tu correo",
+    "enterOtp": "Ingresa el OTP de 6 dígitos",
+    "verifyOtp": "Verificar OTP",
+    "mobileTimeRestriction": "El inicio de sesión móvil solo está permitido entre las 10:00 AM y la 1:00 PM IST",
+    "chromeOtpInfo": "El navegador Chrome requiere verificación OTP por seguridad"
+  },
+  "subscription": {
+    "title": "Elige tu plan",
+    "subtitle": "Actualiza para hacer más preguntas y desbloquear funciones premium",
+    "paymentWindow": "Ventana de pago: 10:00 AM - 11:00 AM IST diariamente",
+    "currentPlan": "Plan actual",
+    "subscribe": "Suscribirse ahora",
+    "free": "Gratis",
+    "bronze": "Bronce",
+    "silver": "Plata",
+    "gold": "Oro",
+    "questionsPerDay": "Preguntas/Día",
+    "unlimited": "Ilimitado"
+  },
+  "social": {
+    "createPost": "Crear publicación",
+    "postingLimit": "Límite de publicación según amigos",
+    "noFriends": "Agrega amigos para empezar a publicar",
+    "like": "Me gusta",
+    "comment": "Comentar",
+    "share": "Compartir"
+  },
+  "profile": {
+    "editProfile": "Editar perfil",
+    "transferPoints": "Transferir puntos",
+    "changeLanguage": "Cambiar idioma",
+    "loginHistory": "Historial de inicio de sesión",
+    "reputation": "Reputación",
+    "points": "Puntos",
+    "badges": "Insignias",
+    "questions": "Preguntas",
+    "answers": "Respuestas"
+  },
+  "password": {
+    "resetTitle": "Olvidé mi contraseña",
+    "resetSuccess": "Se ha enviado una nueva contraseña a tu correo",
+    "dailyLimitWarning": "Ya has restablecido tu contraseña hoy. Intenta de nuevo mañana."
+  }
+}

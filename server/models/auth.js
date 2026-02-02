@@ -52,9 +52,10 @@ const userschema = mongoose.Schema({
 
   // Subscription-based system
   subscription: {
-    plan: { type: String, enum: ['free', 'silver', 'gold'], default: 'free' },
+    plan: { type: String, enum: ['free', 'bronze', 'silver', 'gold'], default: 'free' },
     status: { type: String, enum: ['active', 'inactive'], default: 'active' },
-    validUntil: { type: Date }
+    validUntil: { type: Date },
+    lastTransactionId: { type: String }
   },
 
   // Login History Tracking

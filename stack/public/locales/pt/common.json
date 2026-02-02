@@ -1,0 +1,77 @@
+{
+  "common": {
+    "login": "Entrar",
+    "signup": "Cadastrar",
+    "logout": "Sair",
+    "email": "E-mail",
+    "password": "Senha",
+    "submit": "Enviar",
+    "cancel": "Cancelar",
+    "save": "Salvar",
+    "delete": "Excluir",
+    "edit": "Editar",
+    "loading": "Carregando...",
+    "error": "Erro",
+    "success": "Sucesso"
+  },
+  "nav": {
+    "home": "Início",
+    "questions": "Perguntas",
+    "tags": "Tags",
+    "users": "Usuários",
+    "ask": "Fazer pergunta",
+    "profile": "Perfil",
+    "subscription": "Assinatura",
+    "social": "Feed Social"
+  },
+  "auth": {
+    "loginTitle": "Entre na sua conta",
+    "signupTitle": "Crie sua conta",
+    "forgotPassword": "Esqueceu sua senha?",
+    "noAccount": "Não tem uma conta?",
+    "haveAccount": "Já tem uma conta?",
+    "otpRequired": "Verificação OTP necessária",
+    "otpSent": "OTP enviado para seu e-mail",
+    "enterOtp": "Digite o OTP de 6 dígitos",
+    "verifyOtp": "Verificar OTP",
+    "mobileTimeRestriction": "Login móvel permitido apenas entre 10:00 e 13:00 IST",
+    "chromeOtpInfo": "O navegador Chrome requer verificação OTP para segurança"
+  },
+  "subscription": {
+    "title": "Escolha seu plano",
+    "subtitle": "Atualize para fazer mais perguntas e desbloquear recursos premium",
+    "paymentWindow": "Janela de pagamento: 10:00 - 11:00 IST diariamente",
+    "currentPlan": "Plano atual",
+    "subscribe": "Assinar agora",
+    "free": "Grátis",
+    "bronze": "Bronze",
+    "silver": "Prata",
+    "gold": "Ouro",
+    "questionsPerDay": "Perguntas/Dia",
+    "unlimited": "Ilimitado"
+  },
+  "social": {
+    "createPost": "Criar publicação",
+    "postingLimit": "Limite de postagem baseado em amigos",
+    "noFriends": "Adicione amigos para começar a postar",
+    "like": "Curtir",
+    "comment": "Comentar",
+    "share": "Compartilhar"
+  },
+  "profile": {
+    "editProfile": "Editar perfil",
+    "transferPoints": "Transferir pontos",
+    "changeLanguage": "Mudar idioma",
+    "loginHistory": "Histórico de login",
+    "reputation": "Reputação",
+    "points": "Pontos",
+    "badges": "Emblemas",
+    "questions": "Perguntas",
+    "answers": "Respostas"
+  },
+  "password": {
+    "resetTitle": "Esqueci minha senha",
+    "resetSuccess": "Uma nova senha foi enviada para seu e-mail",
+    "dailyLimitWarning": "Você já redefiniu sua senha hoje. Por favor, tente novamente amanhã."
+  }
+}

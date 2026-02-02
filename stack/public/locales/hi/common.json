@@ -1,0 +1,77 @@
+{
+  "common": {
+    "login": "लॉग इन",
+    "signup": "साइन अप",
+    "logout": "लॉग आउट",
+    "email": "ईमेल",
+    "password": "पासवर्ड",
+    "submit": "जमा करें",
+    "cancel": "रद्द करें",
+    "save": "सहेजें",
+    "delete": "हटाएं",
+    "edit": "संपादित करें",
+    "loading": "लोड हो रहा है...",
+    "error": "त्रुटि",
+    "success": "सफलता"
+  },
+  "nav": {
+    "home": "होम",
+    "questions": "प्रश्न",
+    "tags": "टैग",
+    "users": "उपयोगकर्ता",
+    "ask": "प्रश्न पूछें",
+    "profile": "प्रोफ़ाइल",
+    "subscription": "सब्सक्रिप्शन",
+    "social": "सोशल फ़ीड"
+  },
+  "auth": {
+    "loginTitle": "अपने खाते में लॉग इन करें",
+    "signupTitle": "अपना खाता बनाएं",
+    "forgotPassword": "पासवर्ड भूल गए?",
+    "noAccount": "खाता नहीं है?",
+    "haveAccount": "पहले से खाता है?",
+    "otpRequired": "OTP सत्यापन आवश्यक",
+    "otpSent": "आपके ईमेल पर OTP भेजा गया",
+    "enterOtp": "6 अंकों का OTP दर्ज करें",
+    "verifyOtp": "OTP सत्यापित करें",
+    "mobileTimeRestriction": "मोबाइल लॉगिन केवल सुबह 10:00 बजे से दोपहर 1:00 बजे IST के बीच की अनुमति है",
+    "chromeOtpInfo": "Chrome ब्राउज़र सुरक्षा के लिए OTP सत्यापन आवश्यक है"
+  },
+  "subscription": {
+    "title": "अपना प्लान चुनें",
+    "subtitle": "अधिक प्रश्न पूछने और प्रीमियम सुविधाएं अनलॉक करने के लिए अपग्रेड करें",
+    "paymentWindow": "भुगतान विंडो: प्रतिदिन सुबह 10:00 - 11:00 IST",
+    "currentPlan": "वर्तमान प्लान",
+    "subscribe": "अभी सब्सक्राइब करें",
+    "free": "फ्री",
+    "bronze": "ब्रॉन्ज़",
+    "silver": "सिल्वर",
+    "gold": "गोल्ड",
+    "questionsPerDay": "प्रश्न/दिन",
+    "unlimited": "असीमित"
+  },
+  "social": {
+    "createPost": "पोस्ट बनाएं",
+    "postingLimit": "मित्रों के आधार पर पोस्टिंग सीमा",
+    "noFriends": "पोस्ट करने के लिए मित्र जोड़ें",
+    "like": "पसंद",
+    "comment": "टिप्पणी",
+    "share": "शेयर"
+  },
+  "profile": {
+    "editProfile": "प्रोफ़ाइल संपादित करें",
+    "transferPoints": "अंक स्थानांतरित करें",
+    "changeLanguage": "भाषा बदलें",
+    "loginHistory": "लॉगिन इतिहास",
+    "reputation": "प्रतिष्ठा",
+    "points": "अंक",
+    "badges": "बैज",
+    "questions": "प्रश्न",
+    "answers": "उत्तर"
+  },
+  "password": {
+    "resetTitle": "पासवर्ड भूल गए",
+    "resetSuccess": "आपके ईमेल पर नया पासवर्ड भेजा गया है",
+    "dailyLimitWarning": "आपने आज पहले ही अपना पासवर्ड रीसेट कर लिया है। कृपया कल पुनः प्रयास करें।"
+  }
+}
