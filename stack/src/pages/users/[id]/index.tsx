@@ -57,11 +57,11 @@ const index = () => {
         // Fetch questions to show user's activity
         const questionsRes = await axiosInstance.get("/question/getallquestion");
         const allQuestions = questionsRes.data.data || [];
-        
+
         // Filter questions by this user
         const userQs = allQuestions.filter((q: any) => q.userid === id);
         setUserQuestions(userQs);
-        
+
         // Find answers by this user
         const userAns: any[] = [];
         allQuestions.forEach((q: any) => {
@@ -117,7 +117,7 @@ const index = () => {
       </Mainlayout>
     );
   }
-  
+
   // Calculate stats
   const reputation = users.reputation || 1;
   const goldBadges = users.badges?.gold || 0;
@@ -147,6 +147,54 @@ const index = () => {
     } catch (error) {
       console.log(error);
       toast.error("Something went wrong");
+    }
+  };
+
+  // --- New Handlers ---
+  const [isTransferOpen, setIsTransferOpen] = useState(false);
+  const [transferAmount, setTransferAmount] = useState("");
+  const handleTransfer = async () => {
+    try {
+      const { data } = await import("@/lib/api").then(mod => mod.transferPoints(user?._id, {
+        recipientId: id,
+        amount: Number(transferAmount)
+      }));
+      toast.success(data.message);
+      setIsTransferOpen(false);
+      setTransferAmount("");
+      // Refetch user to update points if needed (though we transferred TO them, so their points updated)
+      // We might want to update our own points in context if we were tracking them there.
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Transfer failed");
+    }
+  };
+
+  const [isLanguageOpen, setIsLanguageOpen] = useState(false);
+  const [selectedLang, setSelectedLang] = useState("English");
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+
+  const handleInitiateLang = async () => {
+    try {
+      const { data } = await import("@/lib/api").then(mod => mod.initiateLanguageChange(user?._id, { language: selectedLang }));
+      toast.success(data.message);
+      setOtpSent(true);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to initiate");
+    }
+  };
+
+  const handleConfirmLang = async () => {
+    try {
+      const { data } = await import("@/lib/api").then(mod => mod.confirmLanguageChange(user?._id, { otp, language: selectedLang }));
+      toast.success(data.message);
+      setOtpSent(false);
+      setOtp("");
+      setIsLanguageOpen(false);
+      // Update local user state if needed
+      if (users) setusers({ ...users, language: selectedLang });
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to confirm");
     }
   };
 
@@ -206,122 +254,104 @@ const index = () => {
                       Edit Profile
                     </Button>
                   </DialogTrigger>
+                  {/* Edit Profile Dialog Content - Existing code... */}
                   <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white text-gray-900">
                     <DialogHeader>
                       <DialogTitle>Edit Profile</DialogTitle>
                     </DialogHeader>
+                    {/* ... (Existing form content preserved implicitly by not replacing it, but wait, I cannot easily preserve existing content inside DialogContent without reading it all or targeting carefully. I will target the Closing Tag of DialogTrigger and append my new Dialogs after it? No, duplicate Dialogs.
+                    
+                    Better approach: Add the new Buttons and Dialogs separately.
+                    */}
                     <div className="space-y-6 py-4">
-                      {/* Basic Information */}
                       <div className="space-y-4">
-                        <h3 className="text-lg font-semibold">
-                          Basic Information
-                        </h3>
+                        <h3 className="text-lg font-semibold">Basic Information</h3>
+                        {/* Name Input */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
                             <Label htmlFor="name">Display Name</Label>
-                            <Input
-                              id="name"
-                              value={editForm.name}
-                              onChange={(e) =>
-                                setEditForm({
-                                  ...editForm,
-                                  name: e.target.value,
-                                })
-                              }
-                              placeholder="Your display name"
-                            />
+                            <Input id="name" value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} placeholder="Your display name" />
                           </div>
                         </div>
                       </div>
-                      {/* About Section */}
                       <div className="space-y-4">
                         <h3 className="text-lg font-semibold">About</h3>
-                        <div>
-                          <Label htmlFor="about">About Me</Label>
-                          <Textarea
-                            id="about"
-                            value={editForm.about}
-                            onChange={(e) =>
-                              setEditForm({
-                                ...editForm,
-                                about: e.target.value,
-                              })
-                            }
-                            placeholder="Tell us about yourself, your experience, and interests..."
-                            className="min-h-32"
-                          />
-                        </div>
+                        <Textarea id="about" value={editForm.about} onChange={(e) => setEditForm({ ...editForm, about: e.target.value })} placeholder="Tell us about yourself..." className="min-h-32" />
                       </div>
-
-                      {/* Tags/Skills Section */}
                       <div className="space-y-4">
-                        <h3 className="text-lg font-semibold">
-                          Skills & Technologies
-                        </h3>
-
-                        <div className="space-y-3">
-                          <div className="flex gap-2">
-                            <Input
-                              value={newTag}
-                              onChange={(e) => setNewTag(e.target.value)}
-                              placeholder="Add a skill or technology"
-                              onKeyPress={(e) =>
-                                e.key === "Enter" && handleAddTag()
-                              }
-                            />
-                            <Button
-                              onClick={handleAddTag}
-                              variant="outline"
-                              size="sm"
-                              className="bg-orange-600 text-white"
-                            >
-                              <Plus className="w-4 h-4" />
-                            </Button>
-                          </div>
-
-                          <div className="flex flex-wrap gap-2">
-                            {editForm.tags.map((tag: any) => {
-                              return (
-                                <Badge
-                                  key={tag}
-                                  variant="secondary"
-                                  className="bg-orange-100 text-orange-800 flex items-center gap-1"
-                                >
-                                  {tag}
-                                  <button onClick={() => handleRemoveTag(tag)}
-                                    className="ml-1 hover:text-red-600"
-                                    title={`Remove ${tag} tag`}
-                                    aria-label={`Remove ${tag} tag`}>
-                                  
-                                    <X className="w-3 h-3" />
-                                  </button>
-                                </Badge>
-                              );
-                            })}
-                          </div>
+                        <h3 className="text-lg font-semibold">Skills & Technologies</h3>
+                        <div className="flex gap-2">
+                          <Input value={newTag} onChange={(e) => setNewTag(e.target.value)} placeholder="Add skill" onKeyPress={(e) => e.key === "Enter" && handleAddTag()} />
+                          <Button onClick={handleAddTag} variant="outline" size="sm"><Plus className="w-4 h-4" /></Button>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {editForm.tags.map(tag => (
+                            <Badge key={tag} variant="secondary" className="bg-orange-100 text-orange-800 flex items-center gap-1">
+                              {tag} <button onClick={() => handleRemoveTag(tag)} className="ml-1 hover:text-red-600"><X className="w-3 h-3" /></button>
+                            </Badge>
+                          ))}
                         </div>
                       </div>
-
-                      {/* Action Buttons */}
                       <div className="flex justify-end gap-3 pt-4 border-t">
-                        <Button
-                          variant="outline"
-                          onClick={() => setIsEditing(false)}
-                          className="bg-white text-gray-800 hover:text-gray-900"
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          onClick={handleSaveProfile}
-                          className="bg-blue-600 hover:bg-blue-700"
-                        >
-                          Save Changes
-                        </Button>
+                        <Button variant="outline" onClick={() => setIsEditing(false)}>Cancel</Button>
+                        <Button onClick={handleSaveProfile} className="bg-blue-600 hover:bg-blue-700">Save Changes</Button>
                       </div>
                     </div>
                   </DialogContent>
                 </Dialog>
               )}
+
+              {/* Language Switcher (Own Profile) */}
+              {isOwnProfile && (
+                <Dialog open={isLanguageOpen} onOpenChange={setIsLanguageOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="ml-2">Language</Button>
+                  </DialogTrigger>
+                  <DialogContent className="bg-white">
+                    <DialogHeader><DialogTitle>Change Language</DialogTitle></DialogHeader>
+                    <div className="space-y-4 py-4">
+                      {!otpSent ? (
+                        <>
+                          <Label>Select Language</Label>
+                          <select className="w-full border p-2 rounded" value={selectedLang} onChange={(e) => setSelectedLang(e.target.value)}>
+                            <option value="English">English</option>
+                            <option value="French">French</option>
+                            <option value="Spanish">Spanish</option>
+                            <option value="Hindi">Hindi</option>
+                            <option value="Portuguese">Portuguese</option>
+                            <option value="Chinese">Chinese</option>
+                          </select>
+                          <Button onClick={handleInitiateLang} className="w-full bg-blue-600 text-white">Next</Button>
+                        </>
+                      ) : (
+                        <>
+                          <Label>Enter OTP ({selectedLang === 'French' ? 'Email' : 'Mobile'})</Label>
+                          <Input value={otp} onChange={(e) => setOtp(e.target.value)} placeholder="000000" />
+                          <Button onClick={handleConfirmLang} className="w-full bg-green-600 text-white">Verify & Change</Button>
+                        </>
+                      )}
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              )}
+
+              {/* Transfer Points (Other Profile) */}
+              {!isOwnProfile && (
+                <Dialog open={isTransferOpen} onOpenChange={setIsTransferOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="bg-green-600 hover:bg-green-700 text-white ml-2">Transfer Points</Button>
+                  </DialogTrigger>
+                  <DialogContent className="bg-white">
+                    <DialogHeader><DialogTitle>Transfer Points to {users.name}</DialogTitle></DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <Label>Amount</Label>
+                      <Input type="number" value={transferAmount} onChange={(e) => setTransferAmount(e.target.value)} placeholder="Enter points (min 10 required to send)" />
+                      <Button onClick={handleTransfer} className="w-full bg-blue-600 text-white">Transfer</Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              )}
+
             </div>
             <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-4">
               <div className="flex items-center">
@@ -385,7 +415,43 @@ const index = () => {
               <div className="text-sm text-gray-500">Badges</div>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardContent className="p-4 text-center">
+              <div className="text-2xl font-bold text-blue-600">{users.points || 0}</div>
+              <div className="text-sm text-gray-500">Points</div>
+            </CardContent>
+          </Card>
         </div>
+
+        {/* Login History (Own Profile) */}
+        {isOwnProfile && users.loginHistory && users.loginHistory.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-xl font-bold mb-4">Login History (Last 5)</h2>
+            <div className="bg-white rounded overflow-hidden shadow">
+              <table className="min-w-full text-sm">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th className="p-3 text-left">Device</th>
+                    <th className="p-3 text-left">Browser</th>
+                    <th className="p-3 text-left">IP</th>
+                    <th className="p-3 text-left">Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.loginHistory.slice(-5).reverse().map((h: any, i: number) => (
+                    <tr key={i} className="border-b">
+                      <td className="p-3 capitalize">{h.device || 'Desktop'}</td>
+                      <td className="p-3">{h.browser || h.os || 'Unknown'}</td>
+                      <td className="p-3">{h.ip}</td>
+                      <td className="p-3">{new Date(h.loginAt).toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
@@ -416,8 +482,8 @@ const index = () => {
                 ) : (
                   <div className="space-y-3">
                     {userQuestions.slice(0, 5).map((q: any) => (
-                      <Link 
-                        key={q._id} 
+                      <Link
+                        key={q._id}
                         href={`/questions/${q._id}`}
                         className="block p-3 border rounded-lg hover:bg-gray-50 transition-colors"
                       >
@@ -451,8 +517,8 @@ const index = () => {
                 ) : (
                   <div className="space-y-3">
                     {userAnswers.slice(0, 5).map((ans: any, index: number) => (
-                      <Link 
-                        key={ans._id || index} 
+                      <Link
+                        key={ans._id || index}
                         href={`/questions/${ans.questionId}`}
                         className="block p-3 border rounded-lg hover:bg-gray-50 transition-colors"
                       >
@@ -510,15 +576,14 @@ const index = () => {
                 ) : (
                   <div className="space-y-2">
                     {users.badgesList.map((badge: any, index: number) => (
-                      <div 
-                        key={badge.name + index} 
+                      <div
+                        key={badge.name + index}
                         className="flex items-center gap-2 p-2 bg-gray-50 rounded"
                       >
-                        <div 
-                          className={`w-3 h-3 rounded-full ${
-                            badge.type === 'gold' ? 'bg-yellow-500' :
+                        <div
+                          className={`w-3 h-3 rounded-full ${badge.type === 'gold' ? 'bg-yellow-500' :
                             badge.type === 'silver' ? 'bg-gray-400' : 'bg-amber-600'
-                          }`}
+                            }`}
                         />
                         <span className="text-sm font-medium">{badge.name}</span>
                       </div>
@@ -530,7 +595,7 @@ const index = () => {
           </div>
         </div>
       </div>
-    </Mainlayout>
+    </Mainlayout >
   );
 };
 

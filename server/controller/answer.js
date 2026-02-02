@@ -18,12 +18,12 @@ const checkAndAwardBadges = async (userid) => {
     if (!userData) return;
 
     const badges = [];
-    
+
     // First Answer badge (bronze)
     if (userData.answersCount >= 1 && !userData.badgesList.find(b => b.name === "First Answer")) {
       badges.push({ name: "First Answer", type: "bronze" });
     }
-    
+
     // Teacher badge - First answer with score of 1 or more (bronze)
     if (userData.answersCount >= 10 && !userData.badgesList.find(b => b.name === "Teacher")) {
       badges.push({ name: "Teacher", type: "bronze" });
@@ -32,7 +32,7 @@ const checkAndAwardBadges = async (userid) => {
     if (badges.length > 0) {
       const badgeUpdates = { gold: 0, silver: 0, bronze: 0 };
       badges.forEach(b => badgeUpdates[b.type]++);
-      
+
       await user.findByIdAndUpdate(userid, {
         $push: { badgesList: { $each: badges } },
         $inc: {
@@ -53,12 +53,12 @@ export const Askanswer = async (req, res) => {
     return res.status(400).json({ message: "question unavailable" });
   }
   const { noofanswer, answerbody, useranswered, userid } = req.body;
-  
+
   // Validate answer body
   if (!answerbody || answerbody.trim().length < 10) {
     return res.status(400).json({ message: "Answer must be at least 10 characters" });
   }
-  
+
   updatenoofanswer(_id, noofanswer);
 
   try {
@@ -69,15 +69,15 @@ export const Askanswer = async (req, res) => {
       },
       { new: true }
     );
-    
-    // Update user's answer count
+
+    // Update user's answer count and Add Points
     await user.findByIdAndUpdate(userid, {
-      $inc: { answersCount: 1 },
+      $inc: { answersCount: 1, points: 5 },
     });
-    
+
     // Check for badges
     await checkAndAwardBadges(userid);
-    
+
     res.status(200).json({ data: updatequestion });
   } catch (error) {
     console.log(error);
@@ -103,18 +103,18 @@ export const deleteanswer = async (req, res) => {
   if (!mongoose.Types.ObjectId.isValid(answerid)) {
     return res.status(400).json({ message: "answer unavailable" });
   }
-  
+
   try {
     // Get the answer to find the user
     const questionDoc = await question.findById(_id);
     const answer = questionDoc.answer.id(answerid);
-    
+
     if (answer) {
       // Decrease user's answer count
       await user.findByIdAndUpdate(answer.userid, {
-        $inc: { answersCount: -1 },
+        $inc: { answersCount: -1, points: -5 },
       });
-      
+
       // If this was the accepted answer, remove the reputation
       if (questionDoc.acceptedAnswerId && questionDoc.acceptedAnswerId.toString() === answerid) {
         await updateReputation(answer.userid, -15);
@@ -122,9 +122,9 @@ export const deleteanswer = async (req, res) => {
         questionDoc.acceptedAnswerId = null;
       }
     }
-    
+
     updatenoofanswer(_id, noofanswer);
-    
+
     const updatequestion = await question.updateOne(
       { _id },
       {
@@ -158,7 +158,7 @@ export const voteanswer = async (req, res) => {
     if (!answer) {
       return res.status(404).send("answer not found...");
     }
-    
+
     // Can't vote on own answer
     if (answer.userid === userid) {
       return res.status(400).json({ message: "You cannot vote on your own answer" });
@@ -166,7 +166,7 @@ export const voteanswer = async (req, res) => {
 
     const upIndex = answer.upvote.findIndex((id) => id === String(userid));
     const downIndex = answer.downvote.findIndex((id) => id === String(userid));
-    
+
     let reputationChange = 0;
 
     if (value === "upvote") {
@@ -198,11 +198,22 @@ export const voteanswer = async (req, res) => {
         await updateReputation(userid, 1);
       }
     }
-    
+
     // Update answer author's reputation
     if (reputationChange !== 0) {
       await updateReputation(answer.userid, reputationChange);
       await checkAndAwardBadges(answer.userid);
+    }
+
+    // Points System Logic
+    if (value === "upvote") {
+      if (answer.upvote.length === 5) {
+        await user.findByIdAndUpdate(answer.userid, { $inc: { points: 5 } });
+      }
+    } else if (value === "downvote") {
+      if (downIndex === -1) { // Was not downvoted before, so this is a new downvote
+        await user.findByIdAndUpdate(answer.userid, { $inc: { points: -2 } });
+      }
     }
 
     await questionDoc.save();

@@ -12,8 +12,9 @@ import {
 
 const router = express.Router();
 import auth from "../middleware/auth.js";
+import { checkQuestionLimit } from "../controller/subscription.js";
 
-router.post("/ask", auth, Askquestion);
+router.post("/ask", auth, checkQuestionLimit, Askquestion);
 router.get("/getallquestion", getallquestion);
 router.get("/:id", getquestionbyid);
 router.delete("/delete/:id", auth, deletequestion);
