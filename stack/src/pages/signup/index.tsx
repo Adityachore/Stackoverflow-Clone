@@ -19,6 +19,13 @@ export default function SignUpPage() {
   const router = useRouter();
   const { Signup, loading } = useAuth();
   const [form, setform] = useState({ name: "", email: "", password: "" });
+  
+  // Password validation helpers
+  const hasMinLength = form.password.length >= 8;
+  const hasLetter = /[a-zA-Z]/.test(form.password);
+  const hasNumber = /\d/.test(form.password);
+  const isPasswordValid = hasMinLength && hasLetter && hasNumber;
+  
   const handleChange = (e: any) => {
     setform({ ...form, [e.target.id]: e.target.value });
   };
@@ -26,6 +33,10 @@ export default function SignUpPage() {
     e.preventDefault();
     if (!form.name || !form.email || !form.password) {
       toast.error("ALL Fields are required");
+      return;
+    }
+    if (!isPasswordValid) {
+      toast.error("Password must be at least 8 characters with at least 1 letter and 1 number");
       return;
     }
     try {
@@ -64,6 +75,8 @@ export default function SignUpPage() {
               <Button
                 variant="outline"
                 className="w-full bg-transparent text-sm"
+                type="button"
+                onClick={(e) => { e.preventDefault(); toast.info("Google OAuth not configured yet. Please use email/password signup."); }}
               >
                 <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
                   <path
@@ -89,6 +102,8 @@ export default function SignUpPage() {
               <Button
                 variant="outline"
                 className="w-full bg-transparent text-sm"
+                type="button"
+                onClick={(e) => { e.preventDefault(); toast.info("GitHub OAuth not configured yet. Please use email/password signup."); }}
               >
                 <svg
                   className="w-4 h-4 mr-2"
@@ -147,11 +162,19 @@ export default function SignUpPage() {
                   type="password"
                   value={form.password}
                   onChange={handleChange}
+                  className={form.password.length > 0 && !isPasswordValid ? 'border-red-500' : form.password.length > 0 && isPasswordValid ? 'border-green-500' : ''}
                 />
-                <p className="text-xs text-gray-600">
-                  Passwords must contain at least eight characters, including at
-                  least 1 letter and 1 number.
-                </p>
+                <div className="text-xs space-y-1">
+                  <p className={`flex items-center ${hasMinLength ? 'text-green-600' : 'text-gray-600'}`}>
+                    {hasMinLength ? '✓' : '○'} At least 8 characters
+                  </p>
+                  <p className={`flex items-center ${hasLetter ? 'text-green-600' : 'text-gray-600'}`}>
+                    {hasLetter ? '✓' : '○'} Contains at least 1 letter
+                  </p>
+                  <p className={`flex items-center ${hasNumber ? 'text-green-600' : 'text-gray-600'}`}>
+                    {hasNumber ? '✓' : '○'} Contains at least 1 number
+                  </p>
+                </div>
               </div>
 
               <div className="flex items-start space-x-2">

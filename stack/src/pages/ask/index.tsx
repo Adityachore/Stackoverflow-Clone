@@ -38,10 +38,33 @@ const index = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
-      toast.error("PLlease login to ask question");
+      toast.error("Please login to ask question");
       router.push("/auth");
       return;
     }
+    
+    // Validate title length (min 15 chars)
+    if (formData.title.length < 15) {
+      toast.error("Title must be at least 15 characters");
+      return;
+    }
+    
+    // Validate body length (min 20 chars)
+    if (formData.body.length < 20) {
+      toast.error("Question body must be at least 20 characters");
+      return;
+    }
+    
+    // Validate tags (min 1, max 5)
+    if (formData.tags.length === 0) {
+      toast.error("At least one tag is required");
+      return;
+    }
+    if (formData.tags.length > 5) {
+      toast.error("Maximum 5 tags allowed");
+      return;
+    }
+    
     try {
       const res = await axiosInstance.post("/question/ask", {
         postquestiondata: {
@@ -56,14 +79,18 @@ const index = () => {
         toast.success("Question posted successfully");
         router.push("/");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
-      toast.error("Something went wrong");
+      toast.error(error.response?.data?.message || "Something went wrong");
     }
   };
   const handleAddTag = (e: any) => {
     e.preventDefault();
     const trimmedTag = newTag.trim();
+    if (formData.tags.length >= 5) {
+      toast.error("Maximum 5 tags allowed");
+      return;
+    }
     if (trimmedTag && !formData.tags.includes(trimmedTag)) {
       setFormData({ ...formData, tags: [...formData.tags, trimmedTag] });
       setNewTag("");
@@ -104,8 +131,14 @@ const index = () => {
                   value={formData.title}
                   onChange={handleChange}
                   placeholder="e.g. How to center a div in CSS?"
-                  className="w-full"
+                  className={`w-full ${formData.title.length > 0 && formData.title.length < 15 ? 'border-red-500' : ''}`}
                 />
+                <div className="flex justify-between mt-1">
+                  <span className={`text-xs ${formData.title.length < 15 ? 'text-red-500' : 'text-green-600'}`}>
+                    {formData.title.length < 15 ? `${15 - formData.title.length} more characters needed` : '✓ Title length OK'}
+                  </span>
+                  <span className="text-xs text-gray-500">{formData.title.length}/15 min</span>
+                </div>
               </div>
 
               <div>
@@ -121,15 +154,21 @@ const index = () => {
                   value={formData.body}
                   onChange={handleChange}
                   placeholder="Describe your problem in detail..."
-                  className="min-h-32 lg:min-h-48 w-full"
+                  className={`min-h-32 lg:min-h-48 w-full ${formData.body.length > 0 && formData.body.length < 20 ? 'border-red-500' : ''}`}
                 />
+                <div className="flex justify-between mt-1">
+                  <span className={`text-xs ${formData.body.length < 20 ? 'text-red-500' : 'text-green-600'}`}>
+                    {formData.body.length < 20 ? `${20 - formData.body.length} more characters needed` : '✓ Body length OK'}
+                  </span>
+                  <span className="text-xs text-gray-500">{formData.body.length}/20 min</span>
+                </div>
               </div>
               <div>
                 <Label htmlFor="tags" className="text-base font-semibold">
                   Tags
                 </Label>
                 <p className="text-sm text-gray-600 mb-2">
-                  Add up to 5 tags to describe what your question is about.
+                  Add up to 5 tags to describe what your question is about. (At least 1 required)
                 </p>
                 <div className="flex gap-2">
                   <Input
@@ -137,6 +176,7 @@ const index = () => {
                     onChange={(e) => setNewTag(e.target.value)}
                     placeholder="e.g. javascript react nextjs"
                     className="w-full"
+                    disabled={formData.tags.length >= 5}
                   />
                   <Button
                     onClick={handleAddTag}
@@ -144,9 +184,16 @@ const index = () => {
                     size="sm"
                     type="button"
                     className="bg-orange-600 text-white"
+                    disabled={formData.tags.length >= 5}
                   >
                     <Plus className="w-4 h-4" />
                   </Button>
+                </div>
+                <div className="flex justify-between mt-1">
+                  <span className={`text-xs ${formData.tags.length === 0 ? 'text-red-500' : 'text-green-600'}`}>
+                    {formData.tags.length === 0 ? 'At least 1 tag required' : `✓ ${formData.tags.length} tag(s) added`}
+                  </span>
+                  <span className="text-xs text-gray-500">{formData.tags.length}/5 tags</span>
                 </div>
 
                 <div className="flex flex-wrap gap-2">
@@ -161,6 +208,8 @@ const index = () => {
                         <button
                           onClick={() => handleRemoveTag(tag)}
                           className="ml-1 hover:text-red-600"
+                          title={`Remove ${tag} tag`}
+                          aria-label={`Remove ${tag} tag`}
                         >
                           <X className="w-3 h-3" />
                         </button>

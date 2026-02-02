@@ -63,6 +63,8 @@ const index = () => {
               <Button
                 variant="outline"
                 className="w-full bg-transparent text-sm"
+                type="button"
+                onClick={(e) => { e.preventDefault(); toast.info("Google OAuth not configured yet. Please use email/password login."); }}
               >
                 <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
                   <path
@@ -87,6 +89,8 @@ const index = () => {
               <Button
                 variant="outline"
                 className="w-full bg-transparent text-sm"
+                type="button"
+                onClick={(e) => { e.preventDefault(); toast.info("GitHub OAuth not configured yet. Please use email/password login."); }}
               >
                 <svg
                   className="w-4 h-4 mr-2"
@@ -142,9 +146,13 @@ const index = () => {
                 {loading ? "loading" : "Log in"}
               </Button>
               <div className="text-center text-sm">
-                <Link href="#" className="text-blue-600 hover:underline">
+                <button 
+                  type="button"
+                  onClick={() => toast.info("Password reset feature coming soon!")}
+                  className="text-blue-600 hover:underline"
+                >
                   Forgot your password?
-                </Link>
+                </button>
               </div>
               <div className="text-center text-sm">
                 Don't have an account?{" "}

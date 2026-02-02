@@ -152,25 +152,33 @@ export default function Home() {
                   <div className="flex flex-col sm:flex-row gap-4">
                     <div className="flex sm:flex-col items-center sm:items-center text-sm text-gray-600 sm:w-16 lg:w-20 gap-4 sm:gap-2">
                       <div className="text-center">
-                        <div className="font-medium">
-                          {question.upvote.length}
+                        <div className={`font-medium ${(question.upvote?.length || 0) - (question.downvote?.length || 0) > 0 ? 'text-green-600' : (question.upvote?.length || 0) - (question.downvote?.length || 0) < 0 ? 'text-red-600' : ''}`}>
+                          {(question.upvote?.length || 0) - (question.downvote?.length || 0)}
                         </div>
                         <div className="text-xs">votes</div>
                       </div>
                       <div className="text-center">
                         <div
-                          className={`font-medium ${question.answer.length > 0
-                            ? "text-green-600 bg-green-100 px-2 py-1 rounded"
+                          className={`font-medium ${question.acceptedAnswerId
+                            ? "text-white bg-green-600 px-2 py-1 rounded"
+                            : question.noofanswer > 0
+                            ? "text-green-600 border border-green-600 px-2 py-1 rounded"
                             : ""
                             }`}
                         >
-                          {question.noofanswer}
+                          {question.acceptedAnswerId ? "✓ " : ""}{question.noofanswer}
                         </div>
                         <div className="text-xs">
                           {question.noofanswer === 1
                             ? "answer"
                             : "answers"}
                         </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="font-medium text-gray-500">
+                          {question.views || 0}
+                        </div>
+                        <div className="text-xs">views</div>
                       </div>
                     </div>
                     <div className="flex-1 min-w-0">
