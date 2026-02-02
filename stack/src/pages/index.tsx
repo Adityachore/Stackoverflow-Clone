@@ -28,14 +28,33 @@ export default function Home() {
     fetchquestion();
   }, []);
 
-  const filteredQuestions = questions.filter((q: any) => {
-    if (!searchQuery) return true;
-    return (
-      q.questiontitle?.toLowerCase().includes(searchQuery) ||
-      q.questionbody?.toLowerCase().includes(searchQuery) ||
-      q.questiontags?.some((tag: string) => tag.toLowerCase().includes(searchQuery))
-    );
-  });
+  const [filter, setFilter] = useState("newest");
+
+  const filteredQuestions = questions
+    .filter((q: any) => {
+      // Search filter
+      const matchesSearch =
+        !searchQuery ||
+        q.questiontitle?.toLowerCase().includes(searchQuery) ||
+        q.questionbody?.toLowerCase().includes(searchQuery) ||
+        q.questiontags?.some((tag: string) =>
+          tag.toLowerCase().includes(searchQuery)
+        );
+
+      // Tab filter
+      if (filter === "unanswered") {
+        return matchesSearch && q.noofanswer === 0;
+      }
+
+      return matchesSearch;
+    })
+    .sort((a: any, b: any) => {
+      // Sorting Logic
+      if (filter === "newest" || filter === "active") {
+        return new Date(b.askedon).getTime() - new Date(a.askedon).getTime();
+      }
+      return 0;
+    });
 
   if (loading) {
     return (
@@ -67,25 +86,49 @@ export default function Home() {
               {filteredQuestions.length} question{filteredQuestions.length !== 1 ? "s" : ""}
             </span>
             <div className="flex flex-wrap gap-1 sm:gap-2">
-              <button className="px-2 sm:px-3 py-1 bg-gray-200 text-gray-700 rounded text-xs sm:text-sm">
+              <button
+                onClick={() => setFilter("newest")}
+                className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm ${filter === "newest"
+                  ? "bg-gray-200 text-gray-700"
+                  : "text-gray-600 hover:bg-gray-100"
+                  }`}
+              >
                 Newest
               </button>
-              <button className="px-2 sm:px-3 py-1 text-gray-600 hover:bg-gray-100 rounded text-xs sm:text-sm">
+              <button
+                onClick={() => setFilter("active")}
+                className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm ${filter === "active"
+                  ? "bg-gray-200 text-gray-700"
+                  : "text-gray-600 hover:bg-gray-100"
+                  }`}
+              >
                 Active
               </button>
-              <button className="px-2 sm:px-3 py-1 text-gray-600 hover:bg-gray-100 rounded flex items-center text-xs sm:text-sm">
+              <button
+                className="px-2 sm:px-3 py-1 text-gray-600 hover:bg-gray-100 rounded flex items-center text-xs sm:text-sm cursor-not-allowed opacity-60"
+                title="Bounties not yet implemented"
+              >
                 Bountied
                 <Badge variant="secondary" className="ml-1 text-xs">
-                  25
+                  0
                 </Badge>
               </button>
-              <button className="px-2 sm:px-3 py-1 text-gray-600 hover:bg-gray-100 rounded text-xs sm:text-sm">
+              <button
+                onClick={() => setFilter("unanswered")}
+                className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm ${filter === "unanswered"
+                  ? "bg-gray-200 text-gray-700"
+                  : "text-gray-600 hover:bg-gray-100"
+                  }`}
+              >
                 Unanswered
               </button>
               <button className="px-2 sm:px-3 py-1 text-gray-600 hover:bg-gray-100 rounded text-xs sm:text-sm">
                 More ▼
               </button>
-              <button className="px-2 sm:px-3 py-1 border border-gray-300 text-gray-600 hover:bg-gray-50 rounded ml-auto text-xs sm:text-sm">
+              <button
+                onClick={() => alert("Advanced filtering implementation coming soon!")}
+                className="px-2 sm:px-3 py-1 border border-gray-300 text-gray-600 hover:bg-gray-50 rounded ml-auto text-xs sm:text-sm"
+              >
                 🔍 Filter
               </button>
             </div>

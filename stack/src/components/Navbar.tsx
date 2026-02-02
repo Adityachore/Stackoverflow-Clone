@@ -26,9 +26,10 @@ const Navbar = ({ handleslidein }: any) => {
   }, []);
   const handlelogout = () => {
     Logout();
+    router.push("/auth");
   };
   return (
-    <div className=" top-0 z-50 w-full min-h-[53px] bg-white border-t-[3px] border-[#ef8236] shadow-[0_1px_5px_#00000033] flex items-center justify-center">
+    <div className="sticky top-0 z-50 w-full min-h-[53px] bg-white border-t-[3px] border-[#ef8236] shadow-[0_1px_5px_#00000033] flex items-center justify-center">
       <div className="w-[90%] max-w-[1440px] flex items-center justify-between mx-auto py-1">
         <button
           aria-label="Toggle sidebar"
@@ -43,13 +44,20 @@ const Navbar = ({ handleslidein }: any) => {
           </Link>
 
           <div className="hidden sm:flex gap-1">
-            {["About", "Products", "For Teams"].map((item) => (
+            {[
+              { label: "About", href: "/about" },
+              { label: "Products", href: "/products" },
+              { label: "For Teams", href: "/teams" },
+            ].map((item) => (
               <Link
-                key={item}
-                href="/"
-                className="text-sm text-[#454545] font-medium px-4 py-2 rounded hover:bg-gray-200 transition"
+                key={item.label}
+                href={item.href}
+                className={`text-sm font-medium px-4 py-2 rounded transition ${router.pathname === item.href
+                  ? "bg-gray-200 text-orange-600"
+                  : "text-[#454545] hover:bg-gray-200"
+                  }`}
               >
-                {item}
+                {item.label}
               </Link>
             ))}
           </div>
