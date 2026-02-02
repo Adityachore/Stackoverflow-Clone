@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import userroutes from "./routes/auth.js"
 import questionroute from "./routes/question.js"
 import answerroutes from "./routes/answer.js"
+import challengeroutes from "./routes/challenge.js"
 const app = express();
 dotenv.config();
 app.use(express.json({ limit: "30mb", extended: true }));
@@ -13,9 +14,10 @@ app.use(cors());
 app.get("/", (req, res) => {
   res.send("Stackoverflow clone is running perfect");
 });
-app.use('/user',userroutes)
-app.use('/question',questionroute)
-app.use('/answer',answerroutes)
+app.use('/user', userroutes)
+app.use('/question', questionroute)
+app.use('/answer', answerroutes)
+app.use('/challenge', challengeroutes)
 const PORT = process.env.PORT || 5000;
 const databaseurl = process.env.MONGODB_URL;
 
