@@ -127,3 +127,12 @@ export const sharePost = async (req, res) => {
         res.status(500).json({ message: "Something went wrong" });
     }
 }
+
+export const getAllUsers = async (req, res) => {
+    try {
+        const users = await User.find().select('name _id avatar about friends');
+        res.status(200).json(users);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};

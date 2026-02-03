@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import Mainlayout from "@/layout/Mainlayout";
-import { createPost, getFeed, likePost, commentPost, sharePost } from "@/lib/api";
+import { useAuth } from "@/lib/AuthContext";
+import { createPost, getFeed, likePost, commentPost, sharePost, getAllUsers, followUser, addFriend } from "@/lib/api";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useRouter } from "next/router";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { Heart, MessageCircle, Share2, MoreHorizontal, Send, Bookmark } from "lucide-react";
+import { Heart, MessageCircle, Share2, MoreHorizontal, Send, Bookmark, Users, UserPlus } from "lucide-react";
 
 // Helper for relative time
 const getRelativeTime = (dateString: string) => {
@@ -23,7 +24,7 @@ const getRelativeTime = (dateString: string) => {
     return date.toLocaleDateString();
 };
 
-const PostItem = ({ post, handleLike, handleComment, handleShare }: any) => {
+const PostItem = ({ post, currentUser, handleLike, handleComment, handleShare }: any) => {
     const [showHeart, setShowHeart] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
     const [isBookmarked, setIsBookmarked] = useState(false);
@@ -33,6 +34,8 @@ const PostItem = ({ post, handleLike, handleComment, handleShare }: any) => {
         handleLike(post._id);
         setTimeout(() => setShowHeart(false), 800);
     };
+
+    const isLiked = post.likes?.some((id: string) => id === currentUser?._id);
 
     return (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 overflow-hidden">
@@ -78,7 +81,7 @@ const PostItem = ({ post, handleLike, handleComment, handleShare }: any) => {
                 <div className="flex justify-between items-center mb-2">
                     <div className="flex items-center space-x-4">
                         <button onClick={() => handleLike(post._id)} className="hover:opacity-60 transition-opacity">
-                            <Heart className={`w-6 h-6 ${post.likes?.some((l: any) => l === 'me') ? 'fill-red-500 text-red-500' : 'text-gray-900'}`} />
+                            <Heart className={`w-6 h-6 ${isLiked ? 'fill-red-500 text-red-500' : 'text-gray-900'}`} />
                         </button>
                         <button className="hover:opacity-60 transition-opacity">
                             <MessageCircle className="w-6 h-6 text-gray-900" />
@@ -165,12 +168,15 @@ const PostItem = ({ post, handleLike, handleComment, handleShare }: any) => {
 };
 
 const SocialFeed = () => {
+    const { user } = useAuth();
     const [posts, setPosts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [description, setDescription] = useState("");
     const [mediaUrl, setMediaUrl] = useState("");
     const [mediaType, setMediaType] = useState("image"); // or video
     const [isPosting, setIsPosting] = useState(false);
+    const [potentialFriends, setPotentialFriends] = useState<any[]>([]);
+    const [activeTab, setActiveTab] = useState<'feed' | 'create' | 'friends'>('feed');
     const router = useRouter();
 
     // Fetch feed on mount
@@ -185,9 +191,37 @@ const SocialFeed = () => {
         }
     };
 
+
+    useEffect(() => {
+        if (activeTab === 'friends') {
+            const fetchUsers = async () => {
+                try {
+                    const { data } = await getAllUsers();
+                    // Filter out current user and existing friends (basic filter)
+                    const filtered = data.filter((u: any) => u._id !== user?._id && !user?.friends?.includes(u._id));
+                    setPotentialFriends(filtered);
+                } catch (err) {
+                    console.error(err);
+                }
+            };
+            fetchUsers();
+        }
+    }, [activeTab, user]);
+
     useEffect(() => {
         fetchFeed();
     }, []);
+
+    const handleAddFriend = async (friendId: string) => {
+        try {
+            await addFriend(friendId, {}); // Use addFriend API
+            toast.success("Friend request sent!");
+            // Remove from list
+            setPotentialFriends(prev => prev.filter(p => p._id !== friendId));
+        } catch (err: any) {
+            toast.error(err.response?.data?.message || "Failed to add friend");
+        }
+    }
 
     const handlePost = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -235,7 +269,7 @@ const SocialFeed = () => {
         }
     };
 
-    const [activeTab, setActiveTab] = useState<'feed' | 'create'>('feed');
+
 
     return (
         <Mainlayout>
@@ -260,6 +294,15 @@ const SocialFeed = () => {
                                 }`}
                         >
                             Create Post
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('friends')}
+                            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'friends'
+                                ? "bg-white text-blue-600 shadow"
+                                : "text-gray-500 hover:text-gray-700"
+                                }`}
+                        >
+                            Find Friends
                         </button>
                     </div>
                 </div>
@@ -302,6 +345,10 @@ const SocialFeed = () => {
                                     value={mediaUrl}
                                     onChange={(e) => setMediaUrl(e.target.value)}
                                 />
+                                <div className="flex gap-2 mt-2">
+                                    <button type="button" onClick={() => { setMediaUrl('https://images.unsplash.com/photo-1498050108023-c5249f4df085'); setMediaType('image'); }} className="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded">Sample Img 1</button>
+                                    <button type="button" onClick={() => { setMediaUrl('https://images.unsplash.com/photo-1555066931-4365d14bab8c'); setMediaType('image'); }} className="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded">Sample Img 2</button>
+                                </div>
                                 <p className="text-xs text-gray-500 mt-1">Direct link to an image or video.</p>
                             </div>
 
@@ -335,6 +382,39 @@ const SocialFeed = () => {
                     </div>
                 )}
 
+                {/* Find Friends Tab */}
+                {activeTab === 'friends' && (
+                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        <h2 className="text-xl font-semibold mb-4 text-gray-800">Connect with Developers</h2>
+                        {potentialFriends.length === 0 ? (
+                            <p className="text-center text-gray-500 py-10">No new users to connect with.</p>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {potentialFriends.map(friend => (
+                                    <div key={friend._id} className="bg-white p-4 rounded-lg shadow-sm border flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <Avatar className="w-10 h-10">
+                                                <AvatarFallback>{friend.name?.[0]}</AvatarFallback>
+                                            </Avatar>
+                                            <div>
+                                                <div className="font-semibold text-gray-900">{friend.name}</div>
+                                                <div className="text-xs text-gray-500 line-clamp-1">{friend.about || "Developer"}</div>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => handleAddFriend(friend._id)}
+                                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                                            title="Add Friend"
+                                        >
+                                            <UserPlus className="w-5 h-5" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+
                 {/* Feed View */}
                 {activeTab === 'feed' && (
                     loading ? (
@@ -354,6 +434,7 @@ const SocialFeed = () => {
                                     <PostItem
                                         key={post._id}
                                         post={post}
+                                        currentUser={user}
                                         handleLike={handleLike}
                                         handleComment={handleComment}
                                         handleShare={handleShare}

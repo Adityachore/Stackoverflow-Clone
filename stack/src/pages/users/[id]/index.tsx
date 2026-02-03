@@ -39,8 +39,17 @@ const index = () => {
   });
   const [newTag, setNewTag] = useState("");
 
+  // --- New Handlers (Moved Up) ---
+  const [isTransferOpen, setIsTransferOpen] = useState(false);
+  const [transferAmount, setTransferAmount] = useState("");
+  const [isLanguageOpen, setIsLanguageOpen] = useState(false);
+  const [selectedLang, setSelectedLang] = useState("English");
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+
   useEffect(() => {
     const fetchuser = async () => {
+      if (!id) return;
       try {
         // Fetch user data using the new endpoint
         const res = await axiosInstance.get(`/user/${id}`);
@@ -97,62 +106,9 @@ const index = () => {
         setloading(false);
       }
     };
-    if (id) {
-      fetchuser();
-    }
+    fetchuser();
   }, [id]);
-  if (loading) {
-    return (
-      <Mainlayout>
-        <div className="flex justify-center items-center py-20">
-          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
-        </div>
-      </Mainlayout>
-    );
-  }
-  if (!users) {
-    return (
-      <Mainlayout>
-        <div className="text-center text-gray-500 mt-4">No user found.</div>
-      </Mainlayout>
-    );
-  }
 
-  // Calculate stats
-  const reputation = users.reputation || 1;
-  const goldBadges = users.badges?.gold || 0;
-  const silverBadges = users.badges?.silver || 0;
-  const bronzeBadges = users.badges?.bronze || 0;
-  const profileViews = users.profileViews || 0;
-  const questionsCount = users.questionsCount || userQuestions.length;
-  const answersCount = users.answersCount || userAnswers.length;
-
-  const handleSaveProfile = async () => {
-    try {
-      const res = await axiosInstance.patch(`/user/update/${user?._id}`, {
-        editForm,
-      });
-      if (res.data.data) {
-        const updatedUser = {
-          ...users,
-          name: editForm.name,
-          about: editForm.about,
-          tags: editForm.tags,
-        };
-
-        setusers(updatedUser);
-        setIsEditing(false);
-        toast.success("Profile updated successfully!");
-      }
-    } catch (error) {
-      console.log(error);
-      toast.error("Something went wrong");
-    }
-  };
-
-  // --- New Handlers ---
-  const [isTransferOpen, setIsTransferOpen] = useState(false);
-  const [transferAmount, setTransferAmount] = useState("");
   const handleTransfer = async () => {
     try {
       const { data } = await import("@/lib/api").then(mod => mod.transferPoints(user?._id, {
@@ -162,17 +118,10 @@ const index = () => {
       toast.success(data.message);
       setIsTransferOpen(false);
       setTransferAmount("");
-      // Refetch user to update points if needed (though we transferred TO them, so their points updated)
-      // We might want to update our own points in context if we were tracking them there.
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Transfer failed");
     }
   };
-
-  const [isLanguageOpen, setIsLanguageOpen] = useState(false);
-  const [selectedLang, setSelectedLang] = useState("English");
-  const [otp, setOtp] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
 
   const handleInitiateLang = async () => {
     try {
@@ -456,11 +405,10 @@ const index = () => {
                     {users.loginHistory.slice(-10).reverse().map((h: any, i: number) => (
                       <tr key={i} className="border-b hover:bg-gray-50">
                         <td className="p-3">
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            h.device === 'mobile' ? 'bg-purple-100 text-purple-800' :
-                            h.device === 'tablet' ? 'bg-orange-100 text-orange-800' :
-                            'bg-blue-100 text-blue-800'
-                          }`}>
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${h.device === 'mobile' ? 'bg-purple-100 text-purple-800' :
+                              h.device === 'tablet' ? 'bg-orange-100 text-orange-800' :
+                                'bg-blue-100 text-blue-800'
+                            }`}>
                             {h.device === 'mobile' ? '📱 Mobile' : h.device === 'tablet' ? '📱 Tablet' : '💻 Desktop'}
                           </span>
                         </td>

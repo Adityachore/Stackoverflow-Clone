@@ -20,3 +20,6 @@ export const removeFriend = (id, data) => axiosInstance.post(`/user/friend/remov
 export const createSubscriptionOrder = (data) => axiosInstance.post("/subscription/create-order", data);
 export const subscribe = (data) => axiosInstance.post("/subscription/subscribe", data);
 export const getSubscriptionStatus = () => axiosInstance.get("/subscription/status");
+
+export const getAllUsers = () => axiosInstance.get("/social/users/all");
+export const followUser = (id) => axiosInstance.post(`/user/friend/add/${id}`);
