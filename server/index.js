@@ -10,6 +10,9 @@ import answerroutes from "./routes/answer.js"
 import challengeroutes from "./routes/challenge.js"
 import socialroutes from "./routes/social.js"
 import subscriptionroutes from "./routes/subscription.js"
+import googleAuthRoutes from "./routes/googleAuth.js"
+import friendsroutes from "./routes/friends.js"
+import followroutes from "./routes/follow.js"
 
 const app = express();
 app.use(express.json({ limit: "30mb", extended: true }));
@@ -24,6 +27,9 @@ app.use('/answer', answerroutes)
 app.use('/challenge', challengeroutes)
 app.use('/social', socialroutes)
 app.use('/subscription', subscriptionroutes)
+app.use('/auth', googleAuthRoutes)
+app.use('/api/friends', friendsroutes)
+app.use('/api/follow', followroutes)
 const PORT = process.env.PORT || 5000;
 const databaseurl = process.env.MONGODB_URL;
 

@@ -8,11 +8,11 @@ const SavesPage = () => {
     return (
         <Mainlayout>
             <div className="max-w-6xl mx-auto p-4 flex flex-col items-center justify-center min-h-[60vh] text-center">
-                <div className="bg-gray-100 p-6 rounded-full mb-6">
-                    <Bookmark className="w-12 h-12 text-gray-400" />
+                <div className="bg-gray-100 dark:bg-gray-800 p-6 rounded-full mb-6">
+                    <Bookmark className="w-12 h-12 text-gray-400 dark:text-gray-500" />
                 </div>
-                <h1 className="text-2xl font-bold text-gray-900 mb-2">Saves</h1>
-                <p className="text-gray-600 max-w-md mb-8">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Saves</h1>
+                <p className="text-gray-600 dark:text-gray-300 max-w-md mb-8">
                     You haven't saved any questions, answers, or lists yet.
                     Click the bookmark icon on any post to save it for later reference.
                 </p>

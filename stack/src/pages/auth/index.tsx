@@ -13,15 +13,15 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import React, { useState } from "react";
 import { toast } from "react-toastify";
-import axiosInstance from "@/lib/axiosinstance";
-
 const index = () => {
   const router = useRouter();
-  const { Login, loading, setUser, setToken } = useAuth();
+  const { Login, loading } = useAuth();
+  const backendUrl = process.env.BACKEND_URL || "http://localhost:5000";
   const [form, setform] = useState({ email: "", password: "" });
   const [requiresOTP, setRequiresOTP] = useState(false);
   const [otp, setOtp] = useState("");
   const [otpLoading, setOtpLoading] = useState(false);
+  const [devOtp, setDevOtp] = useState("");
 
   const handleChange = (e: any) => {
     setform({ ...form, [e.target.id]: e.target.value });
@@ -35,44 +35,22 @@ const index = () => {
     }
     
     try {
-      // If OTP is required and provided, include it
-      if (requiresOTP && otp) {
-        setOtpLoading(true);
-        const { data } = await axiosInstance.post("/user/login", {
-          email: form.email,
-          password: form.password,
-          otp
-        });
-        
-        // Successful login with OTP
-        localStorage.setItem("profile", JSON.stringify(data));
-        setUser(data.data);
-        setToken(data.token);
-        toast.success("Login successful!");
-        router.push("/");
-        return;
-      }
-      
-      // Normal login attempt
-      const { data } = await axiosInstance.post("/user/login", {
+      // Use AuthContext for login to ensure consistent token storage
+      const response = await Login({
         email: form.email,
-        password: form.password
+        password: form.password,
+        otp: requiresOTP ? otp : undefined,
       });
-      
-      // Check if OTP is required (Chrome browser)
-      if (data.requiresOTP) {
+
+      // Handle OTP-required response from backend (Chrome)
+      if (response?.requiresOTP) {
         setRequiresOTP(true);
-        toast.info(`🔐 ${data.message}. Check your ${data.otpSentTo}.`);
+        setDevOtp(response.devOtp || "");
+        toast.info(`🔐 ${response.message}. Check your ${response.otpSentTo}.`);
         return;
       }
-      
-      // Successful direct login (Edge/IE or non-Chrome)
-      localStorage.setItem("profile", JSON.stringify(data));
-      setUser(data.data);
-      setToken(data.token);
-      toast.success("Login successful!");
+
       router.push("/");
-      
     } catch (error: any) {
       const message = error.response?.data?.message || "Login failed";
       
@@ -86,6 +64,7 @@ const index = () => {
       // Reset OTP state on error
       if (requiresOTP) {
         setOtp("");
+        setDevOtp("");
       }
     } finally {
       setOtpLoading(false);
@@ -93,7 +72,7 @@ const index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-6 lg:mb-8">
           <Link href="/" className="flex items-center justify-center mb-4">
@@ -102,18 +81,18 @@ const index = () => {
                 <div className="w-3 h-3 lg:w-4 lg:h-4 bg-orange-500 rounded-sm"></div>
               </div>
             </div>
-            <span className="text-lg lg:text-xl font-bold text-gray-800">
+            <span className="text-lg lg:text-xl font-bold text-gray-800 dark:text-white">
               stack<span className="font-normal">overflow</span>
             </span>
           </Link>
         </div>
         <form onSubmit={handlesubmit}>
-          <Card>
+          <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
             <CardHeader className="space-y-1 text-center">
-              <CardTitle className="text-xl lg:text-2xl">
+              <CardTitle className="text-xl lg:text-2xl text-gray-900 dark:text-white">
                 {requiresOTP ? "Enter OTP" : "Log in to your account"}
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-gray-500 dark:text-gray-400">
                 {requiresOTP 
                   ? "A verification code was sent to your email" 
                   : "Enter your email and password to access Stack Overflow"
@@ -125,9 +104,9 @@ const index = () => {
                 <>
                   <Button
                     variant="outline"
-                    className="w-full bg-transparent text-sm"
+                    className="w-full bg-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 text-sm"
                     type="button"
-                    onClick={(e) => { e.preventDefault(); toast.info("Google OAuth not configured yet. Please use email/password login."); }}
+                    onClick={() => window.location.href = `${backendUrl}/auth/google`}
                   >
                     <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
                       <path
@@ -151,7 +130,7 @@ const index = () => {
                   </Button>
                   <Button
                     variant="outline"
-                    className="w-full bg-transparent text-sm"
+                    className="w-full bg-white text-gray-800 border-gray-300 hover:bg-gray-50 text-sm"
                     type="button"
                     onClick={(e) => { e.preventDefault(); toast.info("GitHub OAuth not configured yet. Please use email/password login."); }}
                   >
@@ -180,7 +159,7 @@ const index = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="text-sm">
+                    <Label htmlFor="email" className="text-sm text-gray-700">
                       Email
                     </Label>
                     <Input
@@ -189,17 +168,20 @@ const index = () => {
                       placeholder="m@example.com"
                       onChange={handleChange}
                       value={form.email}
+                      className="bg-white text-gray-900 border-gray-300"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="password" className="text-sm">
+                    <Label htmlFor="password" className="text-sm text-gray-700">
                       Password
                     </Label>
                     <Input
                       id="password"
                       type="password"
+                      placeholder="Enter your password"
                       onChange={handleChange}
                       value={form.password}
+                      className="bg-white text-gray-900 border-gray-300"
                     />
                   </div>
                 </>
@@ -210,6 +192,11 @@ const index = () => {
                       🔒 Chrome browser detected. OTP verification required for security.
                     </p>
                   </div>
+                  {devOtp && (
+                    <div className="p-3 rounded-md bg-amber-50 text-amber-800 text-xs text-center">
+                      Dev OTP: <strong>{devOtp}</strong>
+                    </div>
+                  )}
                   <div className="space-y-2">
                     <Label htmlFor="otp" className="text-sm">
                       Enter 6-digit OTP

@@ -39,7 +39,7 @@ const CompaniesPage = () => {
                                 </div>
                             </div>
                             <div className="mt-4 sm:mt-0">
-                                <Button variant="secondary" className="text-blue-600 bg-blue-50 hover:bg-blue-100">
+                                <Button variant="secondary" className="bg-blue-50 text-blue-600 hover:bg-blue-100">
                                     View {company.jobs} Jobs
                                 </Button>
                             </div>

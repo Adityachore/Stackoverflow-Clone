@@ -12,6 +12,26 @@ export const SUPPORTED_LOCALES: { code: Locale; name: string; nativeName: string
   { code: 'pt', name: 'Portuguese', nativeName: 'Português' },
 ];
 
+// Map locale codes (used by Next.js) to the human-readable language names expected by the backend
+export const LOCALE_TO_LANGUAGE: Record<Locale, string> = {
+  en: 'English',
+  es: 'Spanish',
+  hi: 'Hindi',
+  fr: 'French',
+  zh: 'Chinese',
+  pt: 'Portuguese',
+};
+
+// Reverse map to convert persisted backend language names back to locale codes if needed
+export const LANGUAGE_TO_LOCALE: Record<string, Locale> = {
+  English: 'en',
+  Spanish: 'es',
+  Hindi: 'hi',
+  French: 'fr',
+  Chinese: 'zh',
+  Portuguese: 'pt',
+};
+
 // Get nested value from object using dot notation
 function getNestedValue(obj: Record<string, any>, path: string): string {
   const result = path.split('.').reduce<any>((acc, part) => acc && acc[part], obj);

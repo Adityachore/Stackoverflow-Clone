@@ -4,6 +4,7 @@ const userschema = mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true },
   password: { type: String, required: true },
+  isVerified: { type: Boolean, default: false },
   about: { type: String, default: "" },
   tags: { type: [String], default: [] },
   joinDate: { type: Date, default: Date.now },
@@ -43,6 +44,9 @@ const userschema = mongoose.Schema({
   mobile: { type: String },
   language: { type: String, default: 'English' },
 
+  // Instant friend code for quick connections
+  friendCode: { type: String, unique: true, sparse: true },
+
   // public social space
   friends: [{ type: String }],
   friendRequests: [{ type: String }],
@@ -69,8 +73,17 @@ const userschema = mongoose.Schema({
 
   // OTP Verification
   otp: {
-    code: String,
+    hash: String,
     expiresAt: Date
+  },
+
+  // Language change OTP (hashed)
+  languageOtp: {
+    hash: String,
+    expiresAt: Date,
+    attempts: { type: Number, default: 0 },
+    resendCount: { type: Number, default: 0 },
+    lastSentAt: Date
   }
 });
 

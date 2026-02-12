@@ -8,6 +8,7 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -17,6 +18,7 @@ export const AuthProvider = ({ children }) => {
         setUser(parsed);
         setToken(parsed.token);
       }
+      setInitialLoading(false);
     }
   }, []);
   const [loading, setloading] = useState(false);
@@ -41,6 +43,80 @@ export const AuthProvider = ({ children }) => {
       const msg = error.response?.data.message || "Signup failed";
       seterror(msg);
       toast.error(msg);
+    } finally {
+      setloading(false);
+    }
+  };
+
+  const registerWithOtp = async ({ name, email, password, mobile }) => {
+    setloading(true);
+    seterror(null);
+    try {
+      await axiosInstance.post("/user/register", {
+        name,
+        email,
+        password,
+        mobile,
+      });
+      const otpRes = await axiosInstance.post("/user/send-otp", { email });
+      toast.success("Registration created. OTP sent.");
+      return otpRes.data;
+    } catch (error) {
+      // If account exists but needs verification, send OTP and redirect
+      if (error.response?.data?.requiresVerification) {
+        try {
+          const otpRes = await axiosInstance.post("/user/send-otp", { email });
+          toast.info("Account exists. OTP sent for verification.");
+          // Return the OTP response so devOtp is available
+          error.response.data.devOtp = otpRes.data.devOtp;
+          throw error; // Re-throw so frontend handles redirect
+        } catch (otpError) {
+          // If OTP sending fails, still throw original error
+          throw error;
+        }
+      }
+      const msg = error.response?.data?.message || "Registration failed";
+      seterror(msg);
+      toast.error(msg);
+      throw error;
+    } finally {
+      setloading(false);
+    }
+  };
+
+  const verifyRegistrationOtp = async ({ email, otp }) => {
+    setloading(true);
+    seterror(null);
+    try {
+      const res = await axiosInstance.post("/user/verify-otp", { email, otp });
+      const { data, token: newToken } = res.data;
+      localStorage.setItem("user", JSON.stringify({ ...data, token: newToken }));
+      setUser(data);
+      setToken(newToken);
+      toast.success("Verification successful");
+      return res.data;
+    } catch (error) {
+      const msg = error.response?.data?.message || "Verification failed";
+      seterror(msg);
+      toast.error(msg);
+      throw error;
+    } finally {
+      setloading(false);
+    }
+  };
+
+  const resendRegistrationOtp = async (email) => {
+    setloading(true);
+    seterror(null);
+    try {
+      const res = await axiosInstance.post("/user/resend-otp", { email });
+      toast.success("OTP resent");
+      return res.data;
+    } catch (error) {
+      const msg = error.response?.data?.message || "Failed to resend OTP";
+      seterror(msg);
+      toast.error(msg);
+      throw error;
     } finally {
       setloading(false);
     }
@@ -110,9 +186,13 @@ export const AuthProvider = ({ children }) => {
         setUser,
         setToken,
         Signup,
+        registerWithOtp,
+        verifyRegistrationOtp,
+        resendRegistrationOtp,
         Login,
         Logout,
         loading,
+        initialLoading,
         error,
         updateUserProfile,
       }}

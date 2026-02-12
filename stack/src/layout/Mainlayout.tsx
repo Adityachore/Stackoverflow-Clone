@@ -19,12 +19,12 @@ const Mainlayout = ({ children }: MainlayoutProps) => {
   };
 
   return (
-    <div className="bg-[#f8f9fa] text-[#3a3a3a] min-h-screen">
+    <div className="bg-[#f8f9fa] dark:bg-gray-900 text-[#3a3a3a] dark:text-gray-100 min-h-screen transition-colors duration-300">
       <Navbar handleslidein={handleslidein} />
       <div className="flex max-w-full py-1">
         <Sidebar isopen={sidebarOpen} />
-        <main className="flex-1 min-w-0 p-4 lg:p-6 bg-white">{children}</main>
-        <div className="hidden lg:block border-1 borde-gray-200">
+        <main className="flex-1 min-w-0 p-4 lg:p-6 bg-white dark:bg-gray-900 transition-colors duration-300">{children}</main>
+        <div className="hidden lg:block border-1 border-gray-200 dark:border-gray-700">
           <RightSideBar />
         </div>
       </div>

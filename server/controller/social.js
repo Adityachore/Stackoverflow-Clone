@@ -1,5 +1,6 @@
 import Post from "../models/post.js";
 import User from "../models/auth.js";
+import Friendship from "../models/friendship.js";
 import mongoose from "mongoose";
 
 export const createPost = async (req, res) => {
@@ -10,7 +11,13 @@ export const createPost = async (req, res) => {
         const user = await User.findById(userId);
         if (!user) return res.status(404).json({ message: "User not found" });
 
-        const friendCount = user.friends.length;
+        // Count friends from Friendship model
+        const friendCount = await Friendship.countDocuments({
+            $or: [
+                { requester: userId, status: 'accepted' },
+                { recipient: userId, status: 'accepted' }
+            ]
+        });
 
         // Check Posting Limits based on Friends
         const today = new Date();
@@ -50,9 +57,37 @@ export const createPost = async (req, res) => {
 };
 
 export const getFeed = async (req, res) => {
+    const userId = req.userid;
+    
     try {
-        const posts = await Post.find().sort({ createdAt: -1 });
-        res.status(200).json(posts);
+        // If user is logged in, show only posts from accepted friends + own posts
+        if (userId) {
+            // Get accepted friends
+            const friendships = await Friendship.find({
+                $or: [
+                    { requester: userId, status: 'accepted' },
+                    { recipient: userId, status: 'accepted' }
+                ]
+            });
+
+            // Extract friend IDs
+            const friendIds = friendships.map(f => {
+                return f.requester.toString() === userId 
+                    ? f.recipient.toString() 
+                    : f.requester.toString();
+            });
+
+            // Include own userId to see own posts
+            const allowedUserIds = [userId, ...friendIds];
+
+            const posts = await Post.find({ userId: { $in: allowedUserIds } })
+                .sort({ createdAt: -1 });
+            
+            return res.status(200).json(posts);
+        }
+
+        // If not logged in, return empty (no posts visible)
+        res.status(200).json([]);
     } catch (error) {
         res.status(404).json({ message: error.message });
     }
@@ -130,9 +165,37 @@ export const sharePost = async (req, res) => {
 
 export const getAllUsers = async (req, res) => {
     try {
-        const users = await User.find().select('name _id avatar about friends');
+        const users = await User.find().select('name _id avatar about reputation');
         res.status(200).json(users);
     } catch (error) {
         res.status(500).json({ message: error.message });
+    }
+};
+
+// Upload media (base64 encoded image/video)
+export const uploadMedia = async (req, res) => {
+    const { mediaData, mediaType } = req.body;
+    const userId = req.userid;
+
+    try {
+        if (!mediaData) {
+            return res.status(400).json({ message: "No media data provided" });
+        }
+
+        // Validate media type
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm'];
+        if (mediaType && !allowedTypes.some(t => mediaType.includes(t.split('/')[1]))) {
+            return res.status(400).json({ message: "Invalid media type" });
+        }
+
+        // For base64 uploads, just return the data URL
+        // In production, you'd upload to cloud storage (S3, Cloudinary, etc.)
+        res.status(200).json({ 
+            mediaUrl: mediaData,
+            mediaType: mediaType || 'image'
+        });
+    } catch (error) {
+        console.error("Upload error:", error);
+        res.status(500).json({ message: "Failed to upload media" });
     }
 };

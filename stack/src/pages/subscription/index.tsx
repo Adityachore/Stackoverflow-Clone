@@ -104,19 +104,19 @@ const SubscriptionPage = () => {
         <Mainlayout>
             <div className="max-w-6xl mx-auto p-6">
                 <div className="text-center mb-10">
-                    <h1 className="text-3xl font-bold mb-4">Choose Your Plan</h1>
-                    <p className="text-gray-600 mb-4">
+                    <h1 className="text-3xl font-bold mb-4 text-gray-900 dark:text-white">Choose Your Plan</h1>
+                    <p className="text-gray-600 dark:text-gray-300 mb-4">
                         Upgrade to ask more questions and unlock premium features.
                     </p>
-                    <div className="inline-flex items-center gap-2 bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-2 rounded-lg text-sm">
+                    <div className="inline-flex items-center gap-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 text-yellow-800 dark:text-yellow-300 px-4 py-2 rounded-lg text-sm">
                         <Clock className="w-4 h-4" />
                         <span><strong>Payment Window:</strong> 10:00 AM - 11:00 AM IST daily</span>
                     </div>
                 </div>
 
                 {subscriptionStatus && currentPlan !== 'free' && (
-                    <div className="mb-8 p-4 bg-green-50 border border-green-200 rounded-lg text-center">
-                        <p className="text-green-800">
+                    <div className="mb-8 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg text-center">
+                        <p className="text-green-800 dark:text-green-300">
                             ✅ You are currently on the <strong className="uppercase">{currentPlan}</strong> plan.
                             {subscriptionStatus.subscription?.validUntil && (
                                 <span> Valid until: {new Date(subscriptionStatus.subscription.validUntil).toLocaleDateString()}</span>
@@ -135,10 +135,10 @@ const SubscriptionPage = () => {
                                 key={plan.id} 
                                 className={`relative border rounded-xl p-6 transition-all duration-300 ${
                                     isGold 
-                                        ? 'border-yellow-400 bg-gradient-to-b from-yellow-50 to-white shadow-lg scale-105' 
+                                        ? 'border-yellow-400 bg-gradient-to-b from-yellow-50 dark:from-yellow-900/20 to-white dark:to-gray-800 shadow-lg scale-105' 
                                         : isCurrentPlan 
-                                            ? 'border-green-400 bg-green-50' 
-                                            : 'bg-white hover:shadow-md'
+                                            ? 'border-green-400 bg-green-50 dark:bg-green-900/20' 
+                                            : 'bg-white dark:bg-gray-800 dark:border-gray-700 hover:shadow-md'
                                 }`}
                             >
                                 {isGold && (
@@ -155,22 +155,22 @@ const SubscriptionPage = () => {
 
                                 <div className="flex items-center gap-2 mb-4">
                                     {getIcon(plan.id)}
-                                    <h3 className="text-xl font-bold uppercase tracking-wide text-gray-700">
+                                    <h3 className="text-xl font-bold uppercase tracking-wide text-gray-700 dark:text-gray-200">
                                         {plan.name}
                                     </h3>
                                 </div>
 
-                                <div className={`text-3xl font-bold mb-2 ${isGold ? 'text-yellow-600' : 'text-blue-600'}`}>
+                                <div className={`text-3xl font-bold mb-2 ${isGold ? 'text-yellow-600 dark:text-yellow-400' : 'text-blue-600 dark:text-blue-400'}`}>
                                     {plan.price}
                                 </div>
 
-                                <div className="mb-6 font-medium text-gray-900 border-b pb-4">
+                                <div className="mb-6 font-medium text-gray-900 dark:text-white border-b dark:border-gray-700 pb-4">
                                     {plan.limit}
                                 </div>
 
                                 <ul className="mb-8 space-y-3">
                                     {plan.features.map((f) => (
-                                        <li key={f} className="flex items-center text-sm text-gray-600">
+                                        <li key={f} className="flex items-center text-sm text-gray-600 dark:text-gray-300">
                                             <Check className={`w-4 h-4 mr-2 ${isGold ? 'text-yellow-500' : 'text-green-500'}`} />
                                             {f}
                                         </li>
@@ -184,9 +184,9 @@ const SubscriptionPage = () => {
                                         isGold
                                             ? 'bg-yellow-500 hover:bg-yellow-600 text-white'
                                             : isCurrentPlan
-                                                ? 'bg-green-100 text-green-700 cursor-default'
+                                                ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 cursor-default'
                                                 : plan.id === 'free'
-                                                    ? 'bg-gray-100 text-gray-500'
+                                                    ? 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
                                                     : 'bg-blue-600 hover:bg-blue-700 text-white'
                                     }`}
                                 >
@@ -197,7 +197,7 @@ const SubscriptionPage = () => {
                     })}
                 </div>
 
-                <div className="mt-12 text-center text-sm text-gray-500">
+                <div className="mt-12 text-center text-sm text-gray-500 dark:text-gray-400">
                     <p>📧 Invoice will be sent to your registered email after successful payment.</p>
                     <p className="mt-2">Need help? Contact support@stackoverflow-clone.com</p>
                 </div>

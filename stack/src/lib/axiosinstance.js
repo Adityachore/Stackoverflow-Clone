@@ -6,6 +6,8 @@ const axiosInstance = axios.create({
     "Content-Type": "application/json",
   },
 });
+
+// Request interceptor - attach auth token
 axiosInstance.interceptors.request.use((req) => {
   if (typeof window !== "undefined") {
     const user = localStorage.getItem("user");
@@ -18,4 +20,21 @@ axiosInstance.interceptors.request.use((req) => {
   }
   return req;
 });
+
+// Response interceptor - handle 401 errors globally
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401 && typeof window !== "undefined") {
+      // Clear invalid token and redirect to login
+      localStorage.removeItem("user");
+      // Only redirect if not already on auth page
+      if (!window.location.pathname.includes('/auth')) {
+        window.location.href = '/auth';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default axiosInstance;

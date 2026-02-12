@@ -17,8 +17,9 @@ import { toast } from "react-toastify";
 
 export default function SignUpPage() {
   const router = useRouter();
-  const { Signup, loading } = useAuth();
-  const [form, setform] = useState({ name: "", email: "", password: "" });
+  const { registerWithOtp, loading } = useAuth();
+  const backendUrl = process.env.BACKEND_URL || "http://localhost:5000";
+  const [form, setform] = useState({ name: "", email: "", password: "", mobile: "" });
   
   // Password validation helpers
   const hasMinLength = form.password.length >= 8;
@@ -40,14 +41,28 @@ export default function SignUpPage() {
       return;
     }
     try {
-      await Signup(form);
-      router.push("/");
+      const otpResponse = await registerWithOtp(form);
+      if (typeof window !== "undefined" && otpResponse?.devOtp) {
+        sessionStorage.setItem("regOtpDev", otpResponse.devOtp);
+      }
+      router.push({
+        pathname: "/signup/verify",
+        query: { email: form.email }
+      });
     } catch (error) {
-      console.log(error);
+      const requiresVerification = error.response?.data?.requiresVerification;
+      const email = error.response?.data?.email || form.email;
+      const devOtp = error.response?.data?.devOtp;
+      if (requiresVerification && email) {
+        if (typeof window !== "undefined" && devOtp) {
+          sessionStorage.setItem("regOtpDev", devOtp);
+        }
+        router.push({ pathname: "/signup/verify", query: { email } });
+      }
     }
   };
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-6 lg:mb-8">
           <Link href="/" className="flex items-center justify-center mb-4">
@@ -56,27 +71,27 @@ export default function SignUpPage() {
                 <div className="w-3 h-3 lg:w-4 lg:h-4 bg-orange-500 rounded-sm"></div>
               </div>
             </div>
-            <span className="text-lg lg:text-xl font-bold text-gray-800">
+            <span className="text-lg lg:text-xl font-bold text-gray-800 dark:text-white">
               stack<span className="font-normal">overflow</span>
             </span>
           </Link>
         </div>
         <form onSubmit={handlesubmit}>
-          <Card>
+          <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
             <CardHeader className="space-y-1 text-center">
-              <CardTitle className="text-xl lg:text-2xl">
+              <CardTitle className="text-xl lg:text-2xl text-gray-900 dark:text-white">
                 Create your account
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-gray-500 dark:text-gray-400">
                 Join the Stack Overflow community
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <Button
                 variant="outline"
-                className="w-full bg-transparent text-sm"
+                className="w-full bg-white text-gray-800 border-gray-300 hover:bg-gray-50 text-sm"
                 type="button"
-                onClick={(e) => { e.preventDefault(); toast.info("Google OAuth not configured yet. Please use email/password signup."); }}
+                onClick={() => window.location.href = `${backendUrl}/auth/google`}
               >
                 <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
                   <path
@@ -101,7 +116,7 @@ export default function SignUpPage() {
 
               <Button
                 variant="outline"
-                className="w-full bg-transparent text-sm"
+                className="w-full bg-white text-gray-800 border-gray-300 hover:bg-gray-50 text-sm"
                 type="button"
                 onClick={(e) => { e.preventDefault(); toast.info("GitHub OAuth not configured yet. Please use email/password signup."); }}
               >
@@ -131,7 +146,7 @@ export default function SignUpPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="name" className="text-sm">
+                <Label htmlFor="name" className="text-sm text-gray-700 dark:text-gray-300">
                   Display name
                 </Label>
                 <Input
@@ -139,10 +154,11 @@ export default function SignUpPage() {
                   placeholder="Enter your display name"
                   value={form.name}
                   onChange={handleChange}
+                  className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm">
+                <Label htmlFor="email" className="text-sm text-gray-700 dark:text-gray-300">
                   Email
                 </Label>
                 <Input
@@ -151,27 +167,42 @@ export default function SignUpPage() {
                   placeholder="m@example.com"
                   value={form.email}
                   onChange={handleChange}
+                  className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm">
+                <Label htmlFor="mobile" className="text-sm text-gray-700 dark:text-gray-300">
+                  Phone Number <span className="text-gray-400 dark:text-gray-500">(optional)</span>
+                </Label>
+                <Input
+                  id="mobile"
+                  type="tel"
+                  placeholder="+1 (555) 123-4567"
+                  value={form.mobile}
+                  onChange={handleChange}
+                  className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-sm text-gray-700 dark:text-gray-300">
                   Password
                 </Label>
                 <Input
                   id="password"
                   type="password"
+                  placeholder="Enter your password"
                   value={form.password}
                   onChange={handleChange}
-                  className={form.password.length > 0 && !isPasswordValid ? 'border-red-500' : form.password.length > 0 && isPasswordValid ? 'border-green-500' : ''}
+                  className={`bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${form.password.length > 0 && !isPasswordValid ? 'border-red-500' : form.password.length > 0 && isPasswordValid ? 'border-green-500' : 'border-gray-300 dark:border-gray-600'}`}
                 />
                 <div className="text-xs space-y-1">
-                  <p className={`flex items-center ${hasMinLength ? 'text-green-600' : 'text-gray-600'}`}>
+                  <p className={`flex items-center ${hasMinLength ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-gray-400'}`}>
                     {hasMinLength ? '✓' : '○'} At least 8 characters
                   </p>
-                  <p className={`flex items-center ${hasLetter ? 'text-green-600' : 'text-gray-600'}`}>
+                  <p className={`flex items-center ${hasLetter ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-gray-400'}`}>
                     {hasLetter ? '✓' : '○'} Contains at least 1 letter
                   </p>
-                  <p className={`flex items-center ${hasNumber ? 'text-green-600' : 'text-gray-600'}`}>
+                  <p className={`flex items-center ${hasNumber ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-gray-400'}`}>
                     {hasNumber ? '✓' : '○'} Contains at least 1 number
                   </p>
                 </div>

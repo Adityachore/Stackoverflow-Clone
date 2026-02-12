@@ -64,18 +64,18 @@ const TagsPage = () => {
         <Mainlayout>
             <div className="max-w-6xl mx-auto p-4">
                 <div className="mb-8">
-                    <h1 className="text-2xl lg:text-3xl font-bold mb-4">Tags</h1>
-                    <p className="text-gray-600 max-w-3xl mb-4">
+                    <h1 className="text-2xl lg:text-3xl font-bold mb-4 text-gray-900 dark:text-white">Tags</h1>
+                    <p className="text-gray-600 dark:text-gray-300 max-w-3xl mb-4">
                         A tag is a keyword or label that categorizes your question with other, similar questions. Using
                         the right tags makes it easier for others to find and answer your question.
                     </p>
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <div className="relative w-full max-w-xs">
-                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500 dark:text-gray-400" />
                             <Input
                                 type="search"
                                 placeholder="Filter by tag name"
-                                className="pl-8 bg-white"
+                                className="pl-8 bg-white dark:bg-gray-800 dark:text-white dark:border-gray-600"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
@@ -84,19 +84,21 @@ const TagsPage = () => {
                             <Button
                                 variant={sortBy === "popular" ? "default" : "outline"}
                                 onClick={() => setSortBy("popular")}
-                                className={sortBy !== "popular" ? "bg-gray-100" : ""}
+                                className={sortBy === "popular" ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"}
                             >
                                 Popular
                             </Button>
                             <Button
-                                variant={sortBy === "name" ? "default" : "ghost"}
+                                variant={sortBy === "name" ? "default" : "outline"}
                                 onClick={() => setSortBy("name")}
+                                className={sortBy === "name" ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"}
                             >
                                 Name
                             </Button>
                             <Button
-                                variant={sortBy === "new" ? "default" : "ghost"}
+                                variant={sortBy === "new" ? "default" : "outline"}
                                 onClick={() => setSortBy("new")}
+                                className={sortBy === "new" ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"}
                             >
                                 New
                             </Button>
@@ -108,23 +110,23 @@ const TagsPage = () => {
                     {filteredTags.map((tag) => {
                         const isWatching = user?.tags?.includes(tag.name);
                         return (
-                            <div key={tag.name} className="bg-white border rounded-lg p-4 flex flex-col gap-3 hover:shadow-sm transition-shadow">
+                            <div key={tag.name} className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg p-4 flex flex-col gap-3 hover:shadow-sm transition-shadow">
                                 <div className="flex justify-between items-start">
-                                    <Badge variant="secondary" className="bg-blue-100 text-blue-800 hover:bg-blue-200 cursor-pointer text-sm px-2 py-1 rounded-md">
+                                    <Badge variant="secondary" className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/50 cursor-pointer text-sm px-2 py-1 rounded-md">
                                         {tag.name}
                                     </Badge>
                                     <button
                                         onClick={() => handleWatch(tag.name)}
-                                        className={`p-1 rounded-full transition-colors ${isWatching ? "bg-orange-100 text-orange-600" : "text-gray-400 hover:bg-gray-100"}`}
+                                        className={`p-1 rounded-full transition-colors ${isWatching ? "bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400" : "text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"}`}
                                         title={isWatching ? "Unwatch tag" : "Watch tag"}
                                     >
                                         {isWatching ? <Check className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                     </button>
                                 </div>
-                                <p className="text-xs text-gray-600 line-clamp-4 flex-grow">
+                                <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-4 flex-grow">
                                     {tag.desc}
                                 </p>
-                                <div className="text-xs text-gray-400 mt-2">
+                                <div className="text-xs text-gray-400 dark:text-gray-500 mt-2">
                                     {tag.count.toLocaleString("en-US")} questions
                                 </div>
                             </div>

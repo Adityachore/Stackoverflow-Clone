@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import crypto from 'crypto';
 
 // Email transporter configuration
 // In production, use real SMTP credentials from environment variables
@@ -177,5 +178,5 @@ export const generateRandomPassword = (length = 12) => {
  * Generate 6-digit OTP
  */
 export const generateOTP = () => {
-    return Math.floor(100000 + Math.random() * 900000).toString();
+    return crypto.randomInt(100000, 1000000).toString();
 };

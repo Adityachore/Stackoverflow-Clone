@@ -15,16 +15,17 @@ import { Textarea } from "@/components/ui/textarea";
 import Mainlayout from "@/layout/Mainlayout";
 import { useAuth } from "@/lib/AuthContext";
 import axiosInstance from "@/lib/axiosinstance";
-import { Award, Calendar, Edit, Eye, MapPin, MessageSquare, Plus, Star, X } from "lucide-react";
+import { Award, Calendar, Edit, Eye, Mail, MapPin, MessageSquare, Phone, Plus, Star, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 
 const index = () => {
-  const { user } = useAuth();
+  const { user, updateUserProfile } = useAuth();
   const router = useRouter();
   const { id } = router.query;
+  const profileId = Array.isArray(id) ? id[0] : id;
   const [users, setusers] = useState<any>(null);
   const [userQuestions, setUserQuestions] = useState<any[]>([]);
   const [userAnswers, setUserAnswers] = useState<any[]>([]);
@@ -36,6 +37,7 @@ const index = () => {
     tags: [] as string[],
     location: "",
     website: "",
+    mobile: "",
   });
   const [newTag, setNewTag] = useState("");
 
@@ -46,13 +48,14 @@ const index = () => {
   const [selectedLang, setSelectedLang] = useState("English");
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
+  const [friendCodeInput, setFriendCodeInput] = useState("");
 
   useEffect(() => {
     const fetchuser = async () => {
-      if (!id) return;
+      if (!profileId) return;
       try {
         // Fetch user data using the new endpoint
-        const res = await axiosInstance.get(`/user/${id}`);
+        const res = await axiosInstance.get(`/user/${profileId}`);
         const userData = res.data.data;
         setusers(userData);
         setEditForm({
@@ -61,21 +64,23 @@ const index = () => {
           tags: userData?.tags || [],
           location: userData?.location || "",
           website: userData?.website || "",
+          mobile: userData?.mobile || "",
         });
+        setSelectedLang(userData?.language || "English");
 
         // Fetch questions to show user's activity
         const questionsRes = await axiosInstance.get("/question/getallquestion");
         const allQuestions = questionsRes.data.data || [];
 
         // Filter questions by this user
-        const userQs = allQuestions.filter((q: any) => q.userid === id);
+        const userQs = allQuestions.filter((q: any) => q.userid === profileId);
         setUserQuestions(userQs);
 
         // Find answers by this user
         const userAns: any[] = [];
         allQuestions.forEach((q: any) => {
           q.answer?.forEach((ans: any) => {
-            if (ans.userid === id) {
+            if (ans.userid === profileId) {
               userAns.push({
                 ...ans,
                 questionTitle: q.questiontitle,
@@ -90,7 +95,7 @@ const index = () => {
         // Fallback to old method
         try {
           const res = await axiosInstance.get("/user/getalluser");
-          const matcheduser = res.data.data.find((u: any) => u._id === id);
+          const matcheduser = res.data.data.find((u: any) => u._id === profileId);
           setusers(matcheduser);
           setEditForm({
             name: matcheduser?.name || "",
@@ -98,7 +103,9 @@ const index = () => {
             tags: matcheduser?.tags || [],
             location: matcheduser?.location || "",
             website: matcheduser?.website || "",
+            mobile: matcheduser?.mobile || "",
           });
+          setSelectedLang(matcheduser?.language || "English");
         } catch (err) {
           console.log(err);
         }
@@ -107,12 +114,12 @@ const index = () => {
       }
     };
     fetchuser();
-  }, [id]);
+  }, [profileId]);
 
   const handleTransfer = async () => {
     try {
       const { data } = await import("@/lib/api").then(mod => mod.transferPoints(user?._id, {
-        recipientId: id,
+        recipientId: profileId,
         amount: Number(transferAmount)
       }));
       toast.success(data.message);
@@ -124,9 +131,18 @@ const index = () => {
   };
 
   const handleInitiateLang = async () => {
+    if (!user?._id) {
+      toast.error("You need to be logged in to change language");
+      return;
+    }
+    if (selectedLang !== 'French' && !users?.mobile) {
+      toast.error("Add a phone number in your profile to change language");
+      return;
+    }
     try {
-      const { data } = await import("@/lib/api").then(mod => mod.initiateLanguageChange(selectedLang));
+      const { data } = await import("@/lib/api").then(mod => mod.initiateLanguageChange(user._id, selectedLang));
       toast.success(data.message);
+      setOtp("");
       setOtpSent(true);
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to initiate");
@@ -134,8 +150,12 @@ const index = () => {
   };
 
   const handleConfirmLang = async () => {
+    if (!user?._id) {
+      toast.error("You need to be logged in to confirm language change");
+      return;
+    }
     try {
-      const { data } = await import("@/lib/api").then(mod => mod.confirmLanguageChange(selectedLang, otp));
+      const { data } = await import("@/lib/api").then(mod => mod.confirmLanguageChange(user._id, selectedLang, otp));
       toast.success(data.message);
       setOtpSent(false);
       setOtp("");
@@ -144,6 +164,44 @@ const index = () => {
       if (users) setusers({ ...users, language: selectedLang });
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to confirm");
+    }
+  };
+
+  const handleCopyCode = async () => {
+    if (!users?.friendCode) {
+      toast.error("No friend code yet");
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(users.friendCode);
+      toast.success("Friend code copied");
+    } catch (err) {
+      console.log(err);
+      toast.error("Copy failed");
+    }
+  };
+
+  const handleAddFriendByCode = async () => {
+    const code = friendCodeInput.trim().toUpperCase();
+    if (!code) {
+      toast.error("Enter a friend code");
+      return;
+    }
+    if (!user?._id) {
+      toast.error("Please log in to add friends");
+      return;
+    }
+    try {
+      const { data } = await import("@/lib/api").then((mod) => mod.addFriendByCode(code));
+      toast.success(data.message || "Friend added successfully");
+      setFriendCodeInput("");
+      setusers((prev: any) => {
+        if (!prev) return prev;
+        const nextFriends = Array.from(new Set([...(prev.friends || []), data.friendId]));
+        return { ...prev, friends: nextFriends };
+      });
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Could not add friend");
     }
   };
 
@@ -162,8 +220,49 @@ const index = () => {
     });
   };
 
+  const handleSaveProfile = async () => {
+    if (!currentUserId) {
+      toast.error("You need to be logged in to update your profile");
+      return;
+    }
+    try {
+      await updateUserProfile(currentUserId, editForm);
+      setIsEditing(false);
+    } catch (err) {
+      console.log(err);
+      toast.error("Update failed");
+    }
+  };
+
   const currentUserId = user?._id;
-  const isOwnProfile = id === currentUserId;
+  const isOwnProfile = profileId === currentUserId;
+  const reputation = users?.reputation ?? 0;
+  const profileViews = users?.profileViews ?? 0;
+  const questionsCount = users?.questionsCount ?? userQuestions.length;
+  const answersCount = users?.answersCount ?? userAnswers.length;
+  const goldBadges = users?.badges?.gold ?? 0;
+  const silverBadges = users?.badges?.silver ?? 0;
+  const bronzeBadges = users?.badges?.bronze ?? 0;
+
+  if (loading) {
+    return (
+      <Mainlayout>
+        <div className="max-w-6xl">
+          <p className="text-gray-600">Loading profile...</p>
+        </div>
+      </Mainlayout>
+    );
+  }
+
+  if (!users) {
+    return (
+      <Mainlayout>
+        <div className="max-w-6xl">
+          <p className="text-gray-600">User not found.</p>
+        </div>
+      </Mainlayout>
+    );
+  }
   return (
     <Mainlayout>
       <div className="max-w-6xl">
@@ -181,14 +280,14 @@ const index = () => {
           <div className="flex-1 min-w-0">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
               <div>
-                <h1 className="text-2xl lg:text-3xl font-bold text-gray-800 mb-1">
+                <h1 className="text-2xl lg:text-3xl font-bold text-gray-800 dark:text-white mb-1">
                   {users.name}
                 </h1>
                 {/* Reputation Score */}
                 <div className="flex items-center gap-2 text-lg">
                   <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
-                  <span className="font-bold text-gray-700">{reputation.toLocaleString()}</span>
-                  <span className="text-gray-500 text-sm">reputation</span>
+                  <span className="font-bold text-gray-700 dark:text-gray-200">{reputation.toLocaleString()}</span>
+                  <span className="text-gray-500 dark:text-gray-400 text-sm">reputation</span>
                 </div>
               </div>
 
@@ -197,16 +296,16 @@ const index = () => {
                   <DialogTrigger asChild>
                     <Button
                       variant="outline"
-                      className="flex items-center gap-2 bg-transparent"
+                      className="flex items-center gap-2 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
                     >
                       <Edit className="w-4 h-4" />
                       Edit Profile
                     </Button>
                   </DialogTrigger>
                   {/* Edit Profile Dialog Content - Existing code... */}
-                  <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white text-gray-900">
+                  <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
                     <DialogHeader>
-                      <DialogTitle>Edit Profile</DialogTitle>
+                      <DialogTitle className="text-gray-900 dark:text-white">Edit Profile</DialogTitle>
                     </DialogHeader>
                     {/* ... (Existing form content preserved implicitly by not replacing it, but wait, I cannot easily preserve existing content inside DialogContent without reading it all or targeting carefully. I will target the Closing Tag of DialogTrigger and append my new Dialogs after it? No, duplicate Dialogs.
                     
@@ -214,23 +313,27 @@ const index = () => {
                     */}
                     <div className="space-y-6 py-4">
                       <div className="space-y-4">
-                        <h3 className="text-lg font-semibold">Basic Information</h3>
+                        <h3 className="text-lg font-semibold text-gray-900">Basic Information</h3>
                         {/* Name Input */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
-                            <Label htmlFor="name">Display Name</Label>
-                            <Input id="name" value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} placeholder="Your display name" />
+                            <Label htmlFor="name" className="text-gray-700">Display Name</Label>
+                            <Input id="name" value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} placeholder="Your display name" className="bg-white text-gray-900 border-gray-300" />
+                          </div>
+                          <div>
+                            <Label htmlFor="mobile" className="text-gray-700">Phone Number</Label>
+                            <Input id="mobile" type="tel" value={editForm.mobile} onChange={(e) => setEditForm({ ...editForm, mobile: e.target.value })} placeholder="+1 (555) 123-4567" className="bg-white text-gray-900 border-gray-300" />
                           </div>
                         </div>
                       </div>
                       <div className="space-y-4">
-                        <h3 className="text-lg font-semibold">About</h3>
-                        <Textarea id="about" value={editForm.about} onChange={(e) => setEditForm({ ...editForm, about: e.target.value })} placeholder="Tell us about yourself..." className="min-h-32" />
+                        <h3 className="text-lg font-semibold text-gray-900">About</h3>
+                        <Textarea id="about" value={editForm.about} onChange={(e) => setEditForm({ ...editForm, about: e.target.value })} placeholder="Tell us about yourself..." className="min-h-32 bg-white text-gray-900 border-gray-300" />
                       </div>
                       <div className="space-y-4">
-                        <h3 className="text-lg font-semibold">Skills & Technologies</h3>
+                        <h3 className="text-lg font-semibold text-gray-900">Skills & Technologies</h3>
                         <div className="flex gap-2">
-                          <Input value={newTag} onChange={(e) => setNewTag(e.target.value)} placeholder="Add skill" onKeyPress={(e) => e.key === "Enter" && handleAddTag()} />
+                          <Input value={newTag} onChange={(e) => setNewTag(e.target.value)} placeholder="Add skill" onKeyPress={(e) => e.key === "Enter" && handleAddTag()} className="bg-white text-gray-900 border-gray-300" />
                           <Button onClick={handleAddTag} variant="outline" size="sm"><Plus className="w-4 h-4" /></Button>
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -242,8 +345,8 @@ const index = () => {
                         </div>
                       </div>
                       <div className="flex justify-end gap-3 pt-4 border-t">
-                        <Button variant="outline" onClick={() => setIsEditing(false)}>Cancel</Button>
-                        <Button onClick={handleSaveProfile} className="bg-blue-600 hover:bg-blue-700">Save Changes</Button>
+                        <Button variant="outline" onClick={() => setIsEditing(false)} className="bg-white text-gray-800 border-gray-300 hover:bg-gray-50">Cancel</Button>
+                        <Button onClick={handleSaveProfile} className="bg-blue-600 text-white hover:bg-blue-700">Save Changes</Button>
                       </div>
                     </div>
                   </DialogContent>
@@ -254,15 +357,15 @@ const index = () => {
               {isOwnProfile && (
                 <Dialog open={isLanguageOpen} onOpenChange={setIsLanguageOpen}>
                   <DialogTrigger asChild>
-                    <Button variant="outline" className="ml-2">Language</Button>
+                    <Button variant="outline" className="ml-2 bg-white text-gray-800 border-gray-300 hover:bg-gray-50">Language</Button>
                   </DialogTrigger>
-                  <DialogContent className="bg-white">
+                  <DialogContent className="bg-white text-gray-900">
                     <DialogHeader><DialogTitle>Change Language</DialogTitle></DialogHeader>
                     <div className="space-y-4 py-4">
                       {!otpSent ? (
                         <>
                           <Label>Select Language</Label>
-                          <select aria-label="Select language" className="w-full border p-2 rounded" value={selectedLang} onChange={(e) => setSelectedLang(e.target.value)}>
+                          <select aria-label="Select language" className="w-full border border-gray-300 p-2 rounded bg-white text-gray-900" value={selectedLang} onChange={(e) => setSelectedLang(e.target.value)}>
                             <option value="English">English</option>
                             <option value="French">French</option>
                             <option value="Spanish">Spanish</option>
@@ -270,13 +373,16 @@ const index = () => {
                             <option value="Portuguese">Portuguese</option>
                             <option value="Chinese">Chinese</option>
                           </select>
-                          <Button onClick={handleInitiateLang} className="w-full bg-blue-600 text-white">Next</Button>
+                          <Button onClick={handleInitiateLang} className="w-full bg-blue-600 text-white hover:bg-blue-700">Next</Button>
                         </>
                       ) : (
                         <>
                           <Label>Enter OTP ({selectedLang === 'French' ? 'Email' : 'Mobile'})</Label>
-                          <Input value={otp} onChange={(e) => setOtp(e.target.value)} placeholder="000000" />
-                          <Button onClick={handleConfirmLang} className="w-full bg-green-600 text-white">Verify & Change</Button>
+                          <Input value={otp} onChange={(e) => setOtp(e.target.value)} placeholder={selectedLang === 'French' ? 'Enter Email OTP' : 'Enter SMS OTP'} />
+                          <p className="text-xs text-gray-500">
+                            {selectedLang === 'French' ? 'Check your email for the OTP.' : 'Check your mobile SMS for the OTP.'}
+                          </p>
+                          <Button onClick={handleConfirmLang} className="w-full bg-green-600 text-white hover:bg-green-700">Verify & Change</Button>
                         </>
                       )}
                     </div>
@@ -314,6 +420,18 @@ const index = () => {
                   {users.location}
                 </div>
               )}
+              {isOwnProfile && users.email && (
+                <div className="flex items-center">
+                  <Mail className="w-4 h-4 mr-1" />
+                  {users.email}
+                </div>
+              )}
+              {isOwnProfile && users.mobile && (
+                <div className="flex items-center">
+                  <Phone className="w-4 h-4 mr-1" />
+                  {users.mobile}
+                </div>
+              )}
               <div className="flex items-center">
                 <Eye className="w-4 h-4 mr-1" />
                 {profileViews} profile views
@@ -340,35 +458,35 @@ const index = () => {
         </div>
         {/* Stats Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-          <Card>
+          <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-gray-800">{reputation.toLocaleString()}</div>
-              <div className="text-sm text-gray-500">Reputation</div>
+              <div className="text-2xl font-bold text-gray-800 dark:text-white">{reputation.toLocaleString()}</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">Reputation</div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-gray-800">{questionsCount}</div>
-              <div className="text-sm text-gray-500">Questions</div>
+              <div className="text-2xl font-bold text-gray-800 dark:text-white">{questionsCount}</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">Questions</div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-gray-800">{answersCount}</div>
-              <div className="text-sm text-gray-500">Answers</div>
+              <div className="text-2xl font-bold text-gray-800 dark:text-white">{answersCount}</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">Answers</div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-gray-800">{goldBadges + silverBadges + bronzeBadges}</div>
-              <div className="text-sm text-gray-500">Badges</div>
+              <div className="text-2xl font-bold text-gray-800 dark:text-white">{goldBadges + silverBadges + bronzeBadges}</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">Badges</div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-blue-600">{users.points || 0}</div>
-              <div className="text-sm text-gray-500">Points</div>
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{users.points || 0}</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">Points</div>
             </CardContent>
           </Card>
         </div>
@@ -376,8 +494,8 @@ const index = () => {
         {/* Login History (Own Profile) */}
         {isOwnProfile && users.loginHistory && users.loginHistory.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-xl font-bold mb-4">Login History</h2>
-            <div className="bg-white rounded-lg overflow-hidden shadow border">
+            <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Login History</h2>
+            <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow border dark:border-gray-700">
               {/* Tabs */}
               <div className="flex border-b">
                 <button className="px-4 py-3 text-sm font-medium text-blue-600 border-b-2 border-blue-600 bg-blue-50">
@@ -513,6 +631,38 @@ const index = () => {
             </Card>
           </div>
           <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Friends</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {isOwnProfile && (
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-600">Your Friend Code</p>
+                    <div className="flex gap-2">
+                      <Input readOnly value={users?.friendCode || "Generating..."} className="bg-gray-50" />
+                      <Button type="button" onClick={handleCopyCode} variant="outline" className="bg-white text-gray-800 border-gray-300 hover:bg-gray-50">Copy</Button>
+                    </div>
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <Label className="text-sm">Add by code</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={friendCodeInput}
+                      onChange={(e) => setFriendCodeInput(e.target.value)}
+                      placeholder="ALICE2024"
+                    />
+                    <Button type="button" onClick={handleAddFriendByCode} className="bg-blue-600 text-white hover:bg-blue-700">Add</Button>
+                  </div>
+                  <p className="text-xs text-gray-500">Instant connection, no approvals.</p>
+                  {users?.friends && (
+                    <p className="text-xs text-gray-600">Friends: {users.friends.length}</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle>Top Tags</CardTitle>

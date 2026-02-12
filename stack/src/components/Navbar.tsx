@@ -1,5 +1,6 @@
 import { useAuth } from "@/lib/AuthContext";
-import { Menu, Search } from "lucide-react";
+import { useTheme } from "@/lib/ThemeContext";
+import { Menu, Search, Sun, Moon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
@@ -12,6 +13,7 @@ import LanguageSwitcher from "./LanguageSwitcher";
 
 const Navbar = ({ handleslidein }: any) => {
   const { user, Logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const router = useRouter();
   const [hasMounted, setHasMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -30,14 +32,14 @@ const Navbar = ({ handleslidein }: any) => {
     router.push("/auth");
   };
   return (
-    <div className="sticky top-0 z-50 w-full min-h-[53px] bg-white border-t-[3px] border-[#ef8236] shadow-[0_1px_5px_#00000033] flex items-center justify-center">
+    <div className="sticky top-0 z-50 w-full min-h-[53px] bg-white dark:bg-gray-900 border-t-[3px] border-[#ef8236] shadow-[0_1px_5px_#00000033] dark:shadow-[0_1px_5px_#00000066] flex items-center justify-center transition-colors duration-300">
       <div className="w-[90%] max-w-[1440px] flex items-center justify-between mx-auto py-1">
         <button
           aria-label="Toggle sidebar"
-          className="sm:block md:hidden p-2 rounded hover:bg-gray-100 transition"
+          className="sm:block md:hidden p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition"
           onClick={handleslidein}
         >
-          <Menu className="w-5 h-5 text-gray-800" />
+          <Menu className="w-5 h-5 text-gray-800 dark:text-gray-200" />
         </button>
         <div className="flex items-center gap-2 flex-grow">
           <Link href="/" className="px-3 py-1">
@@ -54,8 +56,8 @@ const Navbar = ({ handleslidein }: any) => {
                 key={item.label}
                 href={item.href}
                 className={`text-sm font-medium px-4 py-2 rounded transition ${router.pathname === item.href
-                  ? "bg-gray-200 text-orange-600"
-                  : "text-[#454545] hover:bg-gray-200"
+                  ? "bg-gray-200 dark:bg-gray-700 text-orange-600 dark:text-orange-400"
+                  : "text-[#454545] dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
                   }`}
               >
                 {item.label}
@@ -84,6 +86,18 @@ const Navbar = ({ handleslidein }: any) => {
           </form>
         </div>
         <div className="flex items-center gap-2">
+          {/* Dark Mode Toggle */}
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200"
+            aria-label="Toggle dark mode"
+          >
+            {theme === 'dark' ? (
+              <Sun className="w-5 h-5 text-yellow-500" />
+            ) : (
+              <Moon className="w-5 h-5 text-gray-600" />
+            )}
+          </button>
           <LanguageSwitcher variant="icon" />
           {!hasMounted ? null : !user ? (
             <Link

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useTranslation, SUPPORTED_LOCALES, Locale } from '@/lib/i18n';
+import { useEffect, useState } from 'react';
+import { useTranslation, SUPPORTED_LOCALES, Locale, LOCALE_TO_LANGUAGE } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -24,7 +24,10 @@ export function LanguageSwitcher({ variant = 'button' }: LanguageSwitcherProps) 
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
   const [error, setError] = useState('');
+  const [devOtp, setDevOtp] = useState('');
 
   const currentLocale = SUPPORTED_LOCALES.find((l) => l.code === locale);
 
@@ -34,40 +37,98 @@ export function LanguageSwitcher({ variant = 'button' }: LanguageSwitcherProps) 
       return;
     }
 
-    // If user is logged in, require OTP verification for language change
-    if (user && token) {
-      setPendingLocale(newLocale);
-      setLoading(true);
-      setError('');
-
-      try {
-        await initiateLanguageChange(newLocale);
-        setOtpSent(true);
-      } catch (err: any) {
-        setError(err.response?.data?.message || 'Failed to send OTP');
-      } finally {
-        setLoading(false);
-      }
-    } else {
-      // Not logged in, just change the locale directly
+    if (!user || !token) {
       changeLocale(newLocale);
       setIsOpen(false);
+      return;
+    }
+
+    const languageName = LOCALE_TO_LANGUAGE[newLocale];
+    if (!languageName) {
+      setError('Unsupported language selected');
+      return;
+    }
+
+    if (!user._id) {
+      setError('Unable to find your account. Please re-login.');
+      return;
+    }
+    if (languageName !== 'French' && !user.mobile) {
+      setError('Add a phone number in your profile to change language.');
+      return;
+    }
+
+    // Logged-in users must verify via OTP before changing language
+    setPendingLocale(newLocale);
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await initiateLanguageChange(user._id, languageName);
+      setDevOtp(response?.data?.devOtp || '');
+      setOtpSent(true);
+      setResendCooldown(30);
+    } catch (err: any) {
+      setError(err.response?.data?.message || err.message || 'Failed to send OTP');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!resendCooldown) return;
+    const timer = window.setInterval(() => {
+      setResendCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [resendCooldown]);
+
+  const handleResendOtp = async () => {
+    if (!pendingLocale || !user?._id) return;
+    const languageName = LOCALE_TO_LANGUAGE[pendingLocale];
+    if (!languageName) {
+      setError('Unsupported language selected');
+      return;
+    }
+
+    setResendLoading(true);
+    setError('');
+
+    try {
+      const response = await initiateLanguageChange(user._id, languageName);
+      setDevOtp(response?.data?.devOtp || '');
+      setResendCooldown(30);
+    } catch (err: any) {
+      setError(err.response?.data?.message || err.message || 'Failed to resend OTP');
+    } finally {
+      setResendLoading(false);
     }
   };
 
   const handleVerifyOtp = async () => {
     if (!pendingLocale || !otp) return;
 
+    const languageName = LOCALE_TO_LANGUAGE[pendingLocale];
+    if (!languageName) {
+      setError('Unsupported language selected');
+      return;
+    }
+
+    if (!user?._id) {
+      setError('You must be logged in to verify language changes');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
     try {
-      await confirmLanguageChange(pendingLocale, otp);
+      await confirmLanguageChange(user._id, languageName, otp);
       changeLocale(pendingLocale);
       setIsOpen(false);
       resetState();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Invalid OTP');
+      setError(err.response?.data?.message || err.message || 'Invalid OTP');
     } finally {
       setLoading(false);
     }
@@ -78,6 +139,9 @@ export function LanguageSwitcher({ variant = 'button' }: LanguageSwitcherProps) 
     setOtp('');
     setOtpSent(false);
     setError('');
+    setDevOtp('');
+    setResendCooldown(0);
+    setResendLoading(false);
   };
 
   const handleOpenChange = (open: boolean) => {
@@ -100,7 +164,7 @@ export function LanguageSwitcher({ variant = 'button' }: LanguageSwitcherProps) 
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-white text-gray-900">
         <DialogHeader>
           <DialogTitle>
             {otpSent ? 'Verify Language Change' : 'Choose Language'}
@@ -125,29 +189,52 @@ export function LanguageSwitcher({ variant = 'button' }: LanguageSwitcherProps) 
                 Changing to: <strong>{SUPPORTED_LOCALES.find(l => l.code === pendingLocale)?.nativeName}</strong>
               </p>
               <p className="text-xs text-gray-400">
-                {pendingLocale === 'fr' 
-                  ? '📧 OTP sent via Email' 
-                  : '📱 OTP sent via SMS'}
+                {pendingLocale === 'fr' ? '📧 OTP sent via Email' : '📱 OTP sent via SMS'}
               </p>
+              {devOtp && (
+                <p className="mt-2 text-xs text-amber-700 bg-amber-50 rounded px-2 py-1 inline-block">
+                  Dev OTP: <strong>{devOtp}</strong>
+                </p>
+              )}
             </div>
             <input
               type="text"
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
-              placeholder="Enter 6-digit OTP"
+              placeholder={pendingLocale === 'fr' ? 'Enter Email OTP' : 'Enter SMS OTP'}
               maxLength={6}
               className="w-full rounded-md border border-gray-300 px-3 py-2 text-center text-lg tracking-widest"
             />
+            <p className="text-xs text-gray-500 text-center">
+              {pendingLocale === 'fr'
+                ? 'Check your email for the OTP.'
+                : 'Check your mobile SMS for the OTP.'}
+            </p>
+            <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-auto px-2 py-1 text-blue-600 hover:text-blue-700"
+                onClick={handleResendOtp}
+                disabled={resendLoading || resendCooldown > 0}
+              >
+                {resendLoading
+                  ? 'Resending...'
+                  : resendCooldown > 0
+                    ? `Resend in ${resendCooldown}s`
+                    : 'Resend OTP'}
+              </Button>
+            </div>
             <div className="flex gap-2">
               <Button
                 variant="outline"
-                className="flex-1"
+                className="flex-1 bg-white text-gray-800 border-gray-300 hover:bg-gray-50"
                 onClick={() => resetState()}
               >
                 Cancel
               </Button>
               <Button
-                className="flex-1"
+                className="flex-1 bg-blue-600 text-white hover:bg-blue-700"
                 onClick={handleVerifyOtp}
                 disabled={loading || otp.length !== 6}
               >
@@ -161,7 +248,9 @@ export function LanguageSwitcher({ variant = 'button' }: LanguageSwitcherProps) 
               <Button
                 key={lang.code}
                 variant={locale === lang.code ? 'default' : 'outline'}
-                className="justify-start"
+                className={locale === lang.code
+                  ? 'justify-start bg-blue-600 text-white hover:bg-blue-700'
+                  : 'justify-start bg-white text-gray-800 border-gray-300 hover:bg-gray-50'}
                 onClick={() => handleLanguageSelect(lang.code)}
                 disabled={loading}
               >

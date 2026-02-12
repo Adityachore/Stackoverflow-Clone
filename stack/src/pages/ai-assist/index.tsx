@@ -24,27 +24,27 @@ const AIAssistPage = () => {
         <Mainlayout>
             <div className="max-w-4xl mx-auto h-[calc(100vh-100px)] flex flex-col p-4">
                 <div className="mb-4 text-center">
-                    <h1 className="text-2xl font-bold flex items-center justify-center gap-2">
+                    <h1 className="text-2xl font-bold flex items-center justify-center gap-2 text-gray-900 dark:text-white">
                         <Bot className="w-8 h-8 text-orange-500" />
-                        AI Assist <span className="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full">Labs</span>
+                        AI Assist <span className="text-xs bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full">Labs</span>
                     </h1>
-                    <p className="text-gray-500 text-sm">Experimental feature to help you write better questions and answers.</p>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">Experimental feature to help you write better questions and answers.</p>
                 </div>
 
-                <Card className="flex-grow flex flex-col overflow-hidden border shadow-sm">
-                    <CardContent className="flex-grow overflow-y-auto p-4 space-y-4 bg-gray-50">
+                <Card className="flex-grow flex flex-col overflow-hidden border shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                    <CardContent className="flex-grow overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-900">
                         {messages.map((msg, idx) => (
                             <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                                 <div className={`max-w-[80%] rounded-lg px-4 py-2 text-sm ${msg.role === "user"
                                         ? "bg-blue-600 text-white rounded-br-none"
-                                        : "bg-white border text-gray-800 rounded-bl-none shadow-sm"
+                                        : "bg-white dark:bg-gray-800 border dark:border-gray-700 text-gray-800 dark:text-gray-200 rounded-bl-none shadow-sm"
                                     }`}>
                                     {msg.text}
                                 </div>
                             </div>
                         ))}
                     </CardContent>
-                    <div className="p-4 bg-white border-t">
+                    <div className="p-4 bg-white dark:bg-gray-800 border-t dark:border-gray-700">
                         <form
                             onSubmit={(e) => { e.preventDefault(); handleSend(); }}
                             className="flex gap-2"

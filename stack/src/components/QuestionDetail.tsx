@@ -417,11 +417,11 @@ const QuestionDetail = ({ questionId }: any) => {
     <div className="max-w-5xl">
       {/* Question Header */}
       <div className="mb-6">
-        <h1 className="text-xl lg:text-2xl font-semibold mb-4 text-gray-900">
+        <h1 className="text-xl lg:text-2xl font-semibold mb-4 text-gray-900 dark:text-white">
           {question.questiontitle}
         </h1>
 
-        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-4">
+        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mb-4">
           <div className="flex items-center gap-1">
             <Clock className="w-4 h-4" />
             <span>Asked {formatDate(question.askedon)}</span>
@@ -493,22 +493,22 @@ const QuestionDetail = ({ questionId }: any) => {
               </div>
             </div>
             <div className="flex-1 p-4 sm:p-6">
-              <div className="prose max-w-none mb-6">
+              <div className="prose dark:prose-invert max-w-none mb-6">
                 <div
-                  className="text-gray-800 leading-relaxed whitespace-pre-wrap"
+                  className="text-gray-800 dark:text-gray-200 leading-relaxed whitespace-pre-wrap"
                   dangerouslySetInnerHTML={{
                     __html: question.questionbody
                       .replace(
                         /## (.*)/g,
-                        '<h3 class="text-lg font-semibold mt-6 mb-3 text-gray-900">$1</h3>'
+                        '<h3 class="text-lg font-semibold mt-6 mb-3 text-gray-900 dark:text-white">$1</h3>'
                       )
                       .replace(
                         /```(\w+)?\n([\s\S]*?)```/g,
-                        '<pre class="bg-gray-100 p-4 rounded-lg overflow-x-auto my-4"><code class="text-sm">$2</code></pre>'
+                        '<pre class="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg overflow-x-auto my-4"><code class="text-sm">$2</code></pre>'
                       )
                       .replace(
                         /`([^`]+)`/g,
-                        '<code class="bg-gray-100 px-2 py-1 rounded text-sm">$1</code>'
+                        '<code class="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-sm">$1</code>'
                       ),
                   }}
                 />
@@ -518,7 +518,7 @@ const QuestionDetail = ({ questionId }: any) => {
                   <Link key={tag} href={`/tags/${tag}`}>
                     <Badge
                       variant="secondary"
-                      className="bg-blue-100 text-blue-800 hover:bg-blue-200 cursor-pointer"
+                      className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/50 cursor-pointer"
                     >
                       {tag}
                     </Badge>
@@ -530,7 +530,7 @@ const QuestionDetail = ({ questionId }: any) => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-gray-600 hover:text-gray-800"
+                    className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
                     onClick={() => {
                       navigator.clipboard.writeText(window.location.href);
                       toast.success("Link copied to clipboard!");
@@ -542,7 +542,7 @@ const QuestionDetail = ({ questionId }: any) => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-gray-600 hover:text-gray-800"
+                    className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
                   >
                     <Flag className="w-4 h-4 mr-1" />
                     Flag
@@ -594,7 +594,7 @@ const QuestionDetail = ({ questionId }: any) => {
 
       {/* Answers Section */}
       <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-6 text-gray-900">
+        <h2 className="text-xl font-semibold mb-6 text-gray-900 dark:text-white">
           {question.answer?.length || 0} Answer
           {(question.answer?.length || 0) !== 1 ? "s" : ""}
         </h2>
@@ -605,19 +605,19 @@ const QuestionDetail = ({ questionId }: any) => {
             return (
               <Card
                 key={ans._id}
-                className={isAccepted ? "border-green-500 border-2" : ""}
+                className={isAccepted ? "border-green-500 border-2" : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"}
               >
                 <CardContent className="p-0">
                   <div className="flex flex-col sm:flex-row">
                     {/* Answer Voting Section */}
-                    <div className="flex sm:flex-col items-center sm:items-center p-4 sm:p-6 border-b sm:border-b-0 sm:border-r border-gray-200">
+                    <div className="flex sm:flex-col items-center sm:items-center p-4 sm:p-6 border-b sm:border-b-0 sm:border-r border-gray-200 dark:border-gray-700">
                       <Button
                         variant="ghost"
                         size="sm"
                         className={`p-2 ${
                           ans.upvote?.includes(user?._id)
                             ? "text-orange-500"
-                            : "text-gray-600 hover:text-orange-500"
+                            : "text-gray-600 dark:text-gray-400 hover:text-orange-500"
                         }`}
                         onClick={() => handleAnswerVote(ans._id, "upvote")}
                       >
@@ -680,22 +680,22 @@ const QuestionDetail = ({ questionId }: any) => {
                           Accepted Answer
                         </div>
                       )}
-                      <div className="prose max-w-none mb-6">
+                      <div className="prose dark:prose-invert max-w-none mb-6">
                         <div
-                          className="text-gray-800 leading-relaxed whitespace-pre-wrap"
+                          className="text-gray-800 dark:text-gray-200 leading-relaxed whitespace-pre-wrap"
                           dangerouslySetInnerHTML={{
                             __html: ans.answerbody
                               .replace(
                                 /## (.*)/g,
-                                '<h3 class="text-lg font-semibold mt-6 mb-3 text-gray-900">$1</h3>'
+                                '<h3 class="text-lg font-semibold mt-6 mb-3 text-gray-900 dark:text-white">$1</h3>'
                               )
                               .replace(
                                 /```(\w+)?\n([\s\S]*?)```/g,
-                                '<pre class="bg-gray-100 p-4 rounded-lg overflow-x-auto my-4"><code class="text-sm">$2</code></pre>'
+                                '<pre class="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg overflow-x-auto my-4"><code class="text-sm">$2</code></pre>'
                               )
                               .replace(
                                 /`([^`]+)`/g,
-                                '<code class="bg-gray-100 px-2 py-1 rounded text-sm">$1</code>'
+                                '<code class="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-sm">$1</code>'
                               ),
                           }}
                         />
@@ -705,7 +705,7 @@ const QuestionDetail = ({ questionId }: any) => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-gray-600 hover:text-gray-800"
+                            className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
                             onClick={() => {
                               navigator.clipboard.writeText(
                                 `${window.location.href}#answer-${ans._id}`
@@ -775,16 +775,16 @@ const QuestionDetail = ({ questionId }: any) => {
       </div>
 
       {/* Answer Form */}
-      <Card>
+      <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
         <CardContent className="p-6">
-          <h3 className="text-lg font-semibold mb-4 text-gray-900">
+          <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
             Your Answer
           </h3>
           <Textarea
             placeholder="Write your answer here... You can use Markdown formatting. Minimum 10 characters."
             value={newanswer}
             onChange={(e) => setnewAnswer(e.target.value)}
-            className="min-h-32 mb-4 resize-none"
+            className="min-h-32 mb-4 resize-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-200 dark:border-gray-600"
           />
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
             <Button
@@ -794,13 +794,13 @@ const QuestionDetail = ({ questionId }: any) => {
             >
               {isSubmitting ? "Posting..." : "Post Your Answer"}
             </Button>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               By posting your answer, you agree to the{" "}
-              <Link href="#" className="text-blue-600 hover:underline">
+              <Link href="#" className="text-blue-600 dark:text-blue-400 hover:underline">
                 privacy policy
               </Link>{" "}
               and{" "}
-              <Link href="#" className="text-blue-600 hover:underline">
+              <Link href="#" className="text-blue-600 dark:text-blue-400 hover:underline">
                 terms of service
               </Link>
               .
