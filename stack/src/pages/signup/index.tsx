@@ -14,12 +14,15 @@ import { useAuth } from "@/lib/AuthContext";
 import { useState } from "react";
 import { useRouter } from "next/router";
 import { toast } from "react-toastify";
+import { Eye, EyeOff } from "lucide-react";
+import axios from "axios";
 
 export default function SignUpPage() {
   const router = useRouter();
   const { registerWithOtp, loading } = useAuth();
   const backendUrl = process.env.BACKEND_URL || "http://localhost:5000";
   const [form, setform] = useState({ name: "", email: "", password: "", mobile: "" });
+  const [showPassword, setShowPassword] = useState(false);
   
   // Password validation helpers
   const hasMinLength = form.password.length >= 8;
@@ -50,14 +53,19 @@ export default function SignUpPage() {
         query: { email: form.email }
       });
     } catch (error) {
-      const requiresVerification = error.response?.data?.requiresVerification;
-      const email = error.response?.data?.email || form.email;
-      const devOtp = error.response?.data?.devOtp;
-      if (requiresVerification && email) {
-        if (typeof window !== "undefined" && devOtp) {
-          sessionStorage.setItem("regOtpDev", devOtp);
+      if (axios.isAxiosError(error)) {
+        const requiresVerification = error.response?.data?.requiresVerification;
+        const email = error.response?.data?.email || form.email;
+        const devOtp = error.response?.data?.devOtp;
+        if (requiresVerification && email) {
+          if (typeof window !== "undefined" && devOtp) {
+            sessionStorage.setItem("regOtpDev", devOtp);
+          }
+          router.push({ pathname: "/signup/verify", query: { email } });
         }
-        router.push({ pathname: "/signup/verify", query: { email } });
+      } else {
+        console.error("Non-axios error:", error);
+        toast.error("An unexpected error occurred");
       }
     }
   };
@@ -187,14 +195,23 @@ export default function SignUpPage() {
                 <Label htmlFor="password" className="text-sm text-gray-700 dark:text-gray-300">
                   Password
                 </Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Enter your password"
-                  value={form.password}
-                  onChange={handleChange}
-                  className={`bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${form.password.length > 0 && !isPasswordValid ? 'border-red-500' : form.password.length > 0 && isPasswordValid ? 'border-green-500' : 'border-gray-300 dark:border-gray-600'}`}
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your password"
+                    value={form.password}
+                    onChange={handleChange}
+                    className={`bg-white dark:bg-gray-700 text-gray-900 dark:text-white pr-10 ${form.password.length > 0 && !isPasswordValid ? 'border-red-500' : form.password.length > 0 && isPasswordValid ? 'border-green-500' : 'border-gray-300 dark:border-gray-600'}`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
                 <div className="text-xs space-y-1">
                   <p className={`flex items-center ${hasMinLength ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-gray-400'}`}>
                     {hasMinLength ? '✓' : '○'} At least 8 characters

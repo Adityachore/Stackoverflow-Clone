@@ -1,6 +1,7 @@
 import Friendship from "../models/friendship.js";
 import Follow from "../models/follow.js";
 import User from "../models/auth.js";
+import Notification from "../models/notification.js";
 import mongoose from "mongoose";
 
 // Send friend request
@@ -60,7 +61,18 @@ export const sendFriendRequest = async (req, res) => {
 
     await friendship.save();
 
-    // TODO: Send notification to recipient
+    // Send in-app notification to recipient
+    const requester = await User.findById(requesterId).select('name');
+    await Notification.create({
+      recipient: userId,
+      sender: requesterId,
+      type: 'friend_request',
+      title: 'New Friend Request',
+      message: `${requester.name} sent you a friend request`,
+      referenceId: friendship._id,
+      referenceModel: 'user',
+      link: '/friends'
+    });
 
     res.status(201).json({ message: "Friend request sent", friendship });
   } catch (error) {
@@ -101,7 +113,18 @@ export const acceptFriendRequest = async (req, res) => {
       { upsert: true, new: true }
     );
 
-    // TODO: Notify requester that request was accepted
+    // Notify requester that request was accepted
+    const accepter = await User.findById(recipientId).select('name');
+    await Notification.create({
+      recipient: userId,
+      sender: recipientId,
+      type: 'friend_accepted',
+      title: 'Friend Request Accepted',
+      message: `${accepter.name} accepted your friend request`,
+      referenceId: recipientId,
+      referenceModel: 'user',
+      link: '/friends'
+    });
 
     res.status(200).json({ message: "Friend request accepted", friendship });
   } catch (error) {

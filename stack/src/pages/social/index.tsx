@@ -9,7 +9,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { 
     Heart, MessageCircle, Share2, MoreHorizontal, Send, Bookmark, Users, UserPlus,
     Sparkles, TrendingUp, Zap, Camera, Video, Image as ImageIcon, Smile, X, 
-    ChevronLeft, ChevronRight, Plus, Globe, Lock, UserCheck, Clock, Upload
+    ChevronLeft, ChevronRight, Plus, Globe, Lock, UserCheck, Clock, Upload, Check
 } from "lucide-react";
 import Link from "next/link";
 
@@ -414,6 +414,12 @@ const SocialFeed = () => {
     const [uploadProgress, setUploadProgress] = useState(0);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const router = useRouter();
+    
+    // Task 1: Posting limit tracking
+    const [friendCount, setFriendCount] = useState(0);
+    const [postsToday, setPostsToday] = useState(0);
+    const [postingLimit, setPostingLimit] = useState(0);
+    const [canPost, setCanPost] = useState(false);
 
     // Fetch feed on mount
     const fetchFeed = async () => {
@@ -468,9 +474,26 @@ const SocialFeed = () => {
         }
     }, [user, initialLoading]);
 
+    // Task 1: Calculate posting limit based on friend count
+    useEffect(() => {
+        if (user && currentFriends) {
+            const count = currentFriends.length;
+            setFriendCount(count);
+            
+            let limit = 0;
+            if (count === 0) limit = 0;
+            else if (count === 1) limit = 1;
+            else if (count >= 2 && count < 10) limit = 2;
+            else if (count >= 10) limit = Infinity;
+            
+            setPostingLimit(limit);
+            setCanPost(limit > 0);
+        }
+    }, [currentFriends, user]);
+
     const handleAddFriend = async (friendId: string) => {
         try {
-            await addFriend(friendId, {}); // Use addFriend API
+            await addFriend(friendId);
             toast.success("Friend request sent!");
             // Remove from list
             setPotentialFriends(prev => prev.filter(p => p._id !== friendId));
@@ -814,6 +837,43 @@ const SocialFeed = () => {
                                         </button>
                                     </div>
                                     
+                                    {/* Task 1: Enhanced Posting Status Card */}
+                                    <div className={`border rounded-xl p-4 mb-6 ${
+                                        canPost 
+                                            ? 'bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800' 
+                                            : 'bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 border-orange-200 dark:border-orange-800'
+                                    }`}>
+                                        <div className="flex items-start gap-3">
+                                            {canPost ? (
+                                                <Check className="w-5 h-5 text-green-500 mt-0.5" />
+                                            ) : (
+                                                <UserPlus className="w-5 h-5 text-orange-500 mt-0.5" />
+                                            )}
+                                            <div className="flex-1">
+                                                <h4 className={`font-semibold mb-2 ${
+                                                    canPost 
+                                                        ? 'text-green-800 dark:text-green-300' 
+                                                        : 'text-orange-800 dark:text-orange-300'
+                                                }`}>
+                                                    Your Posting Status
+                                                </h4>
+                                                <div className={`text-sm space-y-1 ${
+                                                    canPost 
+                                                        ? 'text-green-700 dark:text-green-400' 
+                                                        : 'text-orange-700 dark:text-orange-400'
+                                                }`}>
+                                                    <p><strong>Friends:</strong> {friendCount}</p>
+                                                    <p><strong>Daily Limit:</strong> {postingLimit === Infinity ? 'Unlimited 🎉' : postingLimit === 0 ? 'No posts allowed' : `${postingLimit} post${postingLimit > 1 ? 's' : ''}`}</p>
+                                                    {!canPost && (
+                                                        <p className="text-xs mt-2 flex items-center gap-1">
+                                                            <span>👉</span> Add a friend to start posting!
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 mb-6">
                                         <div className="flex items-start gap-3">
                                             <Zap className="w-5 h-5 text-blue-500 mt-0.5" />
@@ -882,14 +942,14 @@ const SocialFeed = () => {
                                             <div className="mb-4">
                                                 <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-1">
                                                     <Upload className="w-4 h-4" />
-                                                    Uploading...
+                                                    Uploading... {uploadProgress}%
                                                 </div>
-                                                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                                                    <div 
-                                                        className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-300"
-                                                        style={{ width: `${uploadProgress}%` }}
-                                                    />
-                                                </div>
+                                                <progress 
+                                                    value={uploadProgress} 
+                                                    max={100}
+                                                    className="w-full h-2 rounded-full overflow-hidden [&::-webkit-progress-bar]:bg-gray-200 dark:[&::-webkit-progress-bar]:bg-gray-700 [&::-webkit-progress-value]:bg-gradient-to-r [&::-webkit-progress-value]:from-purple-500 [&::-webkit-progress-value]:to-pink-500 [&::-webkit-progress-value]:rounded-full [&::-moz-progress-bar]:bg-gradient-to-r [&::-moz-progress-bar]:from-purple-500 [&::-moz-progress-bar]:to-pink-500"
+                                                    aria-label="Upload progress"
+                                                />
                                             </div>
                                         )}
 
@@ -905,6 +965,8 @@ const SocialFeed = () => {
                                                 onChange={handleFileSelect}
                                                 accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/webm,video/ogg"
                                                 className="hidden"
+                                                aria-label="Upload photo or video"
+                                                title="Upload photo or video"
                                             />
                                             
                                             {/* Instagram-style upload area */}

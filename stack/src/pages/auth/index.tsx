@@ -13,6 +13,8 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import React, { useState } from "react";
 import { toast } from "react-toastify";
+import { Eye, EyeOff } from "lucide-react";
+
 const index = () => {
   const router = useRouter();
   const { Login, loading } = useAuth();
@@ -22,6 +24,7 @@ const index = () => {
   const [otp, setOtp] = useState("");
   const [otpLoading, setOtpLoading] = useState(false);
   const [devOtp, setDevOtp] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e: any) => {
     setform({ ...form, [e.target.id]: e.target.value });
@@ -175,14 +178,23 @@ const index = () => {
                     <Label htmlFor="password" className="text-sm text-gray-700">
                       Password
                     </Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="Enter your password"
-                      onChange={handleChange}
-                      value={form.password}
-                      className="bg-white text-gray-900 border-gray-300"
-                    />
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Enter your password"
+                        onChange={handleChange}
+                        value={form.password}
+                        className="bg-white text-gray-900 border-gray-300 pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
                   </div>
                 </>
               ) : (
@@ -241,16 +253,6 @@ const index = () => {
                     <Link href="/signup" className="text-blue-600 hover:underline">
                       Sign up
                     </Link>
-                  </div>
-                  
-                  {/* Browser Info */}
-                  <div className="mt-4 p-3 bg-gray-50 rounded-lg text-xs text-gray-500">
-                    <p className="font-semibold mb-1">🔐 Login Security:</p>
-                    <ul className="space-y-1">
-                      <li>• Chrome: Email OTP required</li>
-                      <li>• Edge/IE: Direct login</li>
-                      <li>• Mobile: 10AM-1PM IST only</li>
-                    </ul>
                   </div>
                 </>
               )}

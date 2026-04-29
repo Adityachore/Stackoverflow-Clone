@@ -15,7 +15,9 @@ export const sharePost = (id) => axiosInstance.patch(`/social/post/${id}/share`)
 export const uploadMedia = (data) => axiosInstance.post("/social/upload", data);
 
 // Auth & Features
+// Task 2: Enhanced forgot password with phone verification
 export const forgotPassword = (data) => axiosInstance.post("/user/forgot-password", data);
+export const verifyPasswordResetOTP = (data) => axiosInstance.post("/auth/verify-password-reset-otp", data);
 export const transferPoints = (id, data) => axiosInstance.post(`/user/transfer-points/${id}`, data);
 export const initiateLanguageChange = (userId, language) => {
 	requireUserId(userId, "initiate language change");

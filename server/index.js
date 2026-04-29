@@ -1,6 +1,10 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+// Initialize payment service AFTER dotenv.config()
+import { initializePaymentService } from "./services/payment.js";
+initializePaymentService();
+
 import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
@@ -15,9 +19,20 @@ import friendsroutes from "./routes/friends.js"
 import followroutes from "./routes/follow.js"
 
 const app = express();
+
+// Security: Configure CORS with whitelist
+const corsOptions = {
+  origin: process.env.CORS_ORIGIN 
+    ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
+    : ['http://localhost:3000'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
 app.use(express.json({ limit: "30mb", extended: true }));
 app.use(express.urlencoded({ limit: "30mb", extended: true }));
-app.use(cors());
+app.use(cors(corsOptions));
 app.get("/", (req, res) => {
   res.send("Stackoverflow clone is running perfect");
 });
@@ -31,7 +46,7 @@ app.use('/auth', googleAuthRoutes)
 app.use('/api/friends', friendsroutes)
 app.use('/api/follow', followroutes)
 const PORT = process.env.PORT || 5000;
-const databaseurl = process.env.MONGODB_URL;
+const databaseurl = process.env.MONGODB_URL || process.env.MONGODB_URI;
 
 mongoose
   .connect(databaseurl)

@@ -1,6 +1,7 @@
 import Follow from "../models/follow.js";
 import Friendship from "../models/friendship.js";
 import User from "../models/auth.js";
+import Notification from "../models/notification.js";
 import mongoose from "mongoose";
 
 // Follow a user
@@ -50,7 +51,18 @@ export const followUser = async (req, res) => {
 
     await follow.save();
 
-    // TODO: Send notification to the followed user
+    // Send notification to the followed user
+    const follower = await User.findById(followerId).select('name');
+    await Notification.create({
+      recipient: userId,
+      sender: followerId,
+      type: 'follow',
+      title: 'New Follower',
+      message: `${follower.name} started following you`,
+      referenceId: followerId,
+      referenceModel: 'user',
+      link: `/users/${followerId}`
+    });
 
     res.status(201).json({ message: "Successfully followed user", follow });
   } catch (error) {

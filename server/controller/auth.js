@@ -4,8 +4,7 @@ import otpModel from "../models/otp.js";
 import Friendship from "../models/friendship.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import * as UAParserModule from "ua-parser-js";
-const UAParser = UAParserModule.default || UAParserModule;
+import { UAParser } from "ua-parser-js";
 import moment from "moment-timezone";
 import {
   sendPasswordResetEmail,
@@ -201,7 +200,7 @@ export const Login = async (req, res) => {
     const os = osInfo.name || 'Unknown';
     const deviceType = deviceInfo.type || 'desktop';
 
-    // --- Conditional Authentication Rules ---
+    // --- Task 6: Conditional Authentication Rules (NOW ENABLED) ---
 
     // 1. Mobile devices: Only allowed between 10:00 AM - 1:00 PM IST
     if (deviceType === 'mobile' || deviceType === 'tablet') {
@@ -210,14 +209,15 @@ export const Login = async (req, res) => {
 
       if (currentHour < 10 || currentHour >= 13) {
         return res.status(403).json({
-          message: "Mobile login is only allowed between 10:00 AM and 1:00 PM IST.",
+          message: "Mobile login is only allowed between 10:00 AM and 1:00 PM IST. Current time: " + now.format('hh:mm A z'),
           requiresTimeWindow: true,
-          deviceType
+          deviceType,
+          allowedWindow: "10:00 AM - 1:00 PM IST"
         });
       }
     }
 
-    // 2. Google Chrome: Requires email OTP verification
+    // 2. Google Chrome: Requires email OTP verification (excluding Edge)
     if (browser.toLowerCase().includes('chrome') && !browser.toLowerCase().includes('edge')) {
       if (!otp) {
         const otpIssueResult = await issueOtp({
@@ -242,7 +242,7 @@ export const Login = async (req, res) => {
         }
 
         return res.status(200).json({
-          message: "OTP sent to your email for verification",
+          message: "OTP sent to your email for verification (Chrome requires email OTP)",
           requiresOTP: true,
           otpSentTo: 'email',
           browser,
@@ -313,8 +313,8 @@ export const Login = async (req, res) => {
 
     res.status(200).json({ data: userResponse, token });
   } catch (error) {
-    console.error(error);
-    res.status(500).json("something went wrong..");
+    console.error("Login error:", error);
+    res.status(500).json({ message: "Something went wrong", error: error.message });
     return;
   }
 };
@@ -751,8 +751,9 @@ export const getBookmarks = async (req, res) => {
 };
 
 // --- FORGOT PASSWORD with Daily Limit ---
+// Task 2: Enhanced forgot password with phone verification support
 export const forgotPassword = async (req, res) => {
-  const { email, mobile } = req.body;
+  const { email, mobile, verificationMethod } = req.body;
 
   if (!email && !mobile) {
     return res.status(400).json({ message: "Please provide email or mobile number" });
@@ -776,13 +777,44 @@ export const forgotPassword = async (req, res) => {
     if (lastReset && new Date(lastReset) >= today) {
       if (resetCount >= 1) {
         return res.status(429).json({
-          message: "Warning: You have already reset your password today. Please try again tomorrow.",
-          isWarning: true
+          message: "You can use this option only one time per day. Warning: You have already reset your password today. Please try again tomorrow.",
+          isWarning: true,
+          attemptedCount: resetCount,
+          limitPerDay: 1
         });
       }
     }
 
-    // Generate random password (letters only as per requirement)
+    // If phone verification is requested and phone number exists
+    if (verificationMethod === 'phone' && userData.mobile) {
+      // Generate OTP for phone verification
+      const otp = generateOTP();
+      const otpHash = await bcrypt.hash(otp, 12);
+      
+      // Store OTP with TTL
+      const passwordResetOtp = new otpModel({
+        email: userData.email,
+        mobile: userData.mobile,
+        otpHash,
+        purpose: 'password_reset_phone',
+        expiresAt: new Date(Date.now() + PASSWORD_RESET_OTP_TTL_MS),
+        attempts: 0
+      });
+      
+      await passwordResetOtp.save();
+      
+      // In production, this would send SMS via Twilio/AWS SNS
+      // For now, we return dev OTP
+      return res.status(200).json({
+        message: "OTP sent to your registered phone number for verification",
+        requiresPhoneOTP: true,
+        otpSentTo: userData.mobile,
+        devOtp: process.env.NODE_ENV !== 'production' ? otp : undefined,
+        ttlSeconds: PASSWORD_RESET_OTP_TTL_MS / 1000
+      });
+    }
+
+    // Direct password reset (email method)
     const newPassword = generateRandomPassword(12);
     const hashedPassword = await bcrypt.hash(newPassword, 12);
 
@@ -797,7 +829,8 @@ export const forgotPassword = async (req, res) => {
 
     res.status(200).json({
       message: "A new password has been sent to your registered email address.",
-      resetCount: userData.lastPasswordReset.count
+      resetCount: userData.lastPasswordReset.count,
+      method: 'email'
     });
 
   } catch (error) {

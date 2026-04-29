@@ -1,9 +1,32 @@
 import crypto from 'crypto';
+import Razorpay from 'razorpay';
 
-// Razorpay configuration
-// In production, use real API keys from environment variables
-const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || 'rzp_test_xxxxxxxxxx';
-const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || 'xxxxxxxxxxxxxxxxxx';
+// Razorpay instance - initialized lazily after dotenv.config()
+let razorpayInstance = null;
+let isInitialized = false;
+
+// Initialize function to be called after dotenv.config()
+export function initializePaymentService() {
+    if (isInitialized) return;
+    isInitialized = true;
+    
+    const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID;
+    const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
+
+    // Debug: Log what we received
+    console.log('[Payment Service] Debug - RAZORPAY_KEY_ID:', RAZORPAY_KEY_ID ? '✓ Set' : '✗ Not set');
+    console.log('[Payment Service] Debug - RAZORPAY_KEY_SECRET:', RAZORPAY_KEY_SECRET ? '✓ Set' : '✗ Not set');
+
+    if (RAZORPAY_KEY_ID && RAZORPAY_KEY_SECRET) {
+        razorpayInstance = new Razorpay({
+            key_id: RAZORPAY_KEY_ID,
+            key_secret: RAZORPAY_KEY_SECRET
+        });
+        console.log('[Payment Service] ✅ Razorpay SDK initialized with test keys');
+    } else {
+        console.warn('[Payment Service] ⚠️ Razorpay keys not configured - using mock mode');
+    }
+}
 
 // Subscription Plans
 export const SUBSCRIPTION_PLANS = {
@@ -15,36 +38,46 @@ export const SUBSCRIPTION_PLANS = {
 
 /**
  * Create a Razorpay order
- * In production, this would make an actual API call to Razorpay
  * @param {number} amount - Amount in INR
  * @param {string} userId - User ID for reference
  * @param {string} plan - Plan name
  */
 export const createRazorpayOrder = async (amount, userId, plan) => {
     try {
-        // In production, use Razorpay SDK:
-        // const Razorpay = require('razorpay');
-        // const instance = new Razorpay({ key_id: RAZORPAY_KEY_ID, key_secret: RAZORPAY_KEY_SECRET });
-        // const order = await instance.orders.create({
-        //     amount: amount * 100, // Razorpay expects amount in paise
-        //     currency: 'INR',
-        //     receipt: `order_${userId}_${Date.now()}`,
-        //     notes: { plan, userId }
-        // });
+        // Use real Razorpay if configured, otherwise use mock
+        if (razorpayInstance) {
+            const order = await razorpayInstance.orders.create({
+                amount: amount * 100, // Razorpay expects amount in paise
+                currency: 'INR',
+                receipt: `order_${userId}_${Date.now()}`,
+                notes: { plan, userId },
+                description: `StackOverflow Clone - ${plan} Subscription`
+            });
 
-        // Mock order for development
-        const orderId = `order_${crypto.randomBytes(12).toString('hex')}`;
-        console.log(`[Payment Service] Created Razorpay order: ${orderId} for ₹${amount}`);
+            console.log(`[Payment Service] ✅ Created Razorpay order: ${order.id} for ₹${amount}`);
 
-        return {
-            success: true,
-            orderId,
-            amount: amount * 100, // In paise
-            currency: 'INR',
-            keyId: RAZORPAY_KEY_ID
-        };
+            return {
+                success: true,
+                orderId: order.id,
+                amount: order.amount,
+                currency: order.currency,
+                keyId: RAZORPAY_KEY_ID
+            };
+        } else {
+            // Mock order for development (no keys configured)
+            const orderId = `order_${crypto.randomBytes(12).toString('hex')}`;
+            console.log(`[Payment Service] 🔄 Mock order created: ${orderId} for ₹${amount}`);
+
+            return {
+                success: true,
+                orderId,
+                amount: amount * 100,
+                currency: 'INR',
+                keyId: RAZORPAY_KEY_ID || 'rzp_test_mock'
+            };
+        }
     } catch (error) {
-        console.error('[Payment Service] Error creating order:', error);
+        console.error('[Payment Service] ❌ Error creating order:', error.message);
         return { success: false, error: error.message };
     }
 };

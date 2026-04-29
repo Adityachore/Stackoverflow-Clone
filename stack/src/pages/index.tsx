@@ -4,7 +4,7 @@ import Mainlayout from "@/layout/Mainlayout";
 import axiosInstance from "@/lib/axiosinstance";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 
 export default function Home() {
@@ -13,6 +13,32 @@ export default function Home() {
   const router = useRouter();
 
   const searchQuery = (typeof router.query.search === 'string' ? router.query.search : "")?.toLowerCase() || "";
+
+  // Advanced filter state
+  const [showFilterPanel, setShowFilterPanel] = useState(false);
+  const [advancedFilters, setAdvancedFilters] = useState({
+    hasAcceptedAnswer: false,
+    noAnswers: false,
+    hasAnswers: false,
+    minVotes: 0,
+    selectedTags: [] as string[],
+    dateRange: 'all' as 'all' | 'today' | 'week' | 'month' | 'year'
+  });
+  const filterRef = useRef<HTMLDivElement>(null);
+
+  // Close filter panel when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
+        setShowFilterPanel(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Get unique tags from questions
+  const allTags = [...new Set(questions.flatMap((q: any) => q.questiontags || []))];
 
   useEffect(() => {
     const fetchquestion = async () => {
@@ -43,7 +69,56 @@ export default function Home() {
 
       // Tab filter
       if (filter === "unanswered") {
-        return matchesSearch && q.noofanswer === 0;
+        if (q.noofanswer !== 0) return false;
+      }
+
+      // Advanced filters
+      if (advancedFilters.hasAcceptedAnswer && !q.acceptedAnswerId) {
+        return false;
+      }
+
+      if (advancedFilters.noAnswers && q.noofanswer > 0) {
+        return false;
+      }
+
+      if (advancedFilters.hasAnswers && q.noofanswer === 0) {
+        return false;
+      }
+
+      const votes = (q.upvote?.length || 0) - (q.downvote?.length || 0);
+      if (advancedFilters.minVotes > 0 && votes < advancedFilters.minVotes) {
+        return false;
+      }
+
+      if (advancedFilters.selectedTags.length > 0) {
+        const hasMatchingTag = q.questiontags?.some((tag: string) =>
+          advancedFilters.selectedTags.includes(tag)
+        );
+        if (!hasMatchingTag) return false;
+      }
+
+      // Date range filter
+      if (advancedFilters.dateRange !== 'all') {
+        const questionDate = new Date(q.askedon);
+        const now = new Date();
+        let cutoffDate = new Date();
+
+        switch (advancedFilters.dateRange) {
+          case 'today':
+            cutoffDate.setHours(0, 0, 0, 0);
+            break;
+          case 'week':
+            cutoffDate.setDate(now.getDate() - 7);
+            break;
+          case 'month':
+            cutoffDate.setMonth(now.getMonth() - 1);
+            break;
+          case 'year':
+            cutoffDate.setFullYear(now.getFullYear() - 1);
+            break;
+        }
+
+        if (questionDate < cutoffDate) return false;
       }
 
       return matchesSearch;
@@ -55,6 +130,24 @@ export default function Home() {
       }
       return 0;
     });
+
+  const clearAdvancedFilters = () => {
+    setAdvancedFilters({
+      hasAcceptedAnswer: false,
+      noAnswers: false,
+      hasAnswers: false,
+      minVotes: 0,
+      selectedTags: [],
+      dateRange: 'all'
+    });
+  };
+
+  const hasActiveFilters = advancedFilters.hasAcceptedAnswer || 
+    advancedFilters.noAnswers || 
+    advancedFilters.hasAnswers || 
+    advancedFilters.minVotes > 0 || 
+    advancedFilters.selectedTags.length > 0 || 
+    advancedFilters.dateRange !== 'all';
 
   if (loading) {
     return (
@@ -125,12 +218,166 @@ export default function Home() {
               <button className="px-2 sm:px-3 py-1 text-gray-600 hover:bg-gray-100 rounded text-xs sm:text-sm">
                 More ▼
               </button>
-              <button
-                onClick={() => alert("Advanced filtering implementation coming soon!")}
-                className="px-2 sm:px-3 py-1 border border-gray-300 text-gray-600 hover:bg-gray-50 rounded ml-auto text-xs sm:text-sm"
-              >
-                🔍 Filter
-              </button>
+              <div className="relative" ref={filterRef}>
+                <button
+                  onClick={() => setShowFilterPanel(!showFilterPanel)}
+                  className={`px-2 sm:px-3 py-1 border text-gray-600 hover:bg-gray-50 rounded ml-auto text-xs sm:text-sm flex items-center gap-1 ${
+                    hasActiveFilters ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300'
+                  }`}
+                >
+                  🔍 Filter
+                  {hasActiveFilters && (
+                    <span className="bg-blue-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                      !
+                    </span>
+                  )}
+                </button>
+
+                {/* Advanced Filter Panel */}
+                {showFilterPanel && (
+                  <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 p-4">
+                    <div className="flex justify-between items-center mb-3">
+                      <h3 className="font-medium text-gray-900 dark:text-white">Advanced Filters</h3>
+                      {hasActiveFilters && (
+                        <button
+                          onClick={clearAdvancedFilters}
+                          className="text-xs text-blue-600 hover:underline"
+                        >
+                          Clear all
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Answer Status */}
+                    <div className="mb-4">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                        Answer Status
+                      </label>
+                      <div className="space-y-2">
+                        <label className="flex items-center gap-2 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={advancedFilters.hasAcceptedAnswer}
+                            onChange={(e) => setAdvancedFilters(prev => ({
+                              ...prev,
+                              hasAcceptedAnswer: e.target.checked
+                            }))}
+                            className="rounded border-gray-300"
+                          />
+                          Has accepted answer
+                        </label>
+                        <label className="flex items-center gap-2 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={advancedFilters.noAnswers}
+                            onChange={(e) => setAdvancedFilters(prev => ({
+                              ...prev,
+                              noAnswers: e.target.checked,
+                              hasAnswers: false
+                            }))}
+                            className="rounded border-gray-300"
+                          />
+                          No answers
+                        </label>
+                        <label className="flex items-center gap-2 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={advancedFilters.hasAnswers}
+                            onChange={(e) => setAdvancedFilters(prev => ({
+                              ...prev,
+                              hasAnswers: e.target.checked,
+                              noAnswers: false
+                            }))}
+                            className="rounded border-gray-300"
+                          />
+                          Has answers
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Minimum Votes */}
+                    <div className="mb-4">
+                      <label htmlFor="minVotes" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                        Minimum Votes
+                      </label>
+                      <input
+                        id="minVotes"
+                        type="number"
+                        min="0"
+                        value={advancedFilters.minVotes}
+                        onChange={(e) => setAdvancedFilters(prev => ({
+                          ...prev,
+                          minVotes: parseInt(e.target.value) || 0
+                        }))}
+                        placeholder="0"
+                        aria-label="Minimum votes filter"
+                        className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+
+                    {/* Date Range */}
+                    <div className="mb-4">
+                      <label htmlFor="dateRange" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                        Posted Within
+                      </label>
+                      <select
+                        id="dateRange"
+                        value={advancedFilters.dateRange}
+                        onChange={(e) => setAdvancedFilters(prev => ({
+                          ...prev,
+                          dateRange: e.target.value as any
+                        }))}
+                        aria-label="Filter by date range"
+                        className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="all">All time</option>
+                        <option value="today">Today</option>
+                        <option value="week">Past week</option>
+                        <option value="month">Past month</option>
+                        <option value="year">Past year</option>
+                      </select>
+                    </div>
+
+                    {/* Tags Filter */}
+                    {allTags.length > 0 && (
+                      <div className="mb-3">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                          Filter by Tags
+                        </label>
+                        <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto">
+                          {allTags.slice(0, 15).map((tag: string) => (
+                            <button
+                              key={tag}
+                              onClick={() => {
+                                setAdvancedFilters(prev => ({
+                                  ...prev,
+                                  selectedTags: prev.selectedTags.includes(tag)
+                                    ? prev.selectedTags.filter(t => t !== tag)
+                                    : [...prev.selectedTags, tag]
+                                }));
+                              }}
+                              className={`text-xs px-2 py-1 rounded ${
+                                advancedFilters.selectedTags.includes(tag)
+                                  ? 'bg-blue-500 text-white'
+                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              }`}
+                            >
+                              {tag}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <button
+                      onClick={() => setShowFilterPanel(false)}
+                      className="w-full mt-2 bg-blue-600 text-white text-sm py-2 rounded hover:bg-blue-700"
+                    >
+                      Apply Filters
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
