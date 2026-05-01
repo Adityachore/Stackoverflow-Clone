@@ -20,7 +20,7 @@ import axios from "axios";
 export default function SignUpPage() {
   const router = useRouter();
   const { registerWithOtp, loading } = useAuth();
-  const backendUrl = process.env.BACKEND_URL || "http://localhost:5000";
+  const backendUrl = process.env.BACKEND_URL || "https://stackoverflow-clone-6cll.onrender.com";
   const [form, setform] = useState({ name: "", email: "", password: "", mobile: "" });
   const [showPassword, setShowPassword] = useState(false);
   

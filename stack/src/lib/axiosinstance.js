@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const axiosInstance = axios.create({
-  baseURL: process.env.BACKEND_URL || "http://localhost:5000",
+  baseURL: process.env.BACKEND_URL || "https://stackoverflow-clone-6cll.onrender.com",
   headers: {
     "Content-Type": "application/json",
   },

@@ -83,8 +83,8 @@ Before starting the servers, you need MongoDB running:
 
 Once running:
 - **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:5000
-- **API Test**: http://localhost:5000/ (should show "Stackoverflow clone is running perfect")
+- **Backend API**: https://stackoverflow-clone-6cll.onrender.com
+- **API Test**: https://stackoverflow-clone-6cll.onrender.com/ (should show "Stackoverflow clone is running perfect")
 
 ---
 

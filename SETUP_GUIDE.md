@@ -83,7 +83,7 @@ You should see:
 🚀 Server running on port 5000
 ```
 
-The API will be available at: `http://localhost:5000`
+The API will be available at: `https://stackoverflow-clone-6cll.onrender.com`
 
 ### Step 5: Start the Frontend
 

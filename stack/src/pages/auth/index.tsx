@@ -18,7 +18,7 @@ import { Eye, EyeOff } from "lucide-react";
 const index = () => {
   const router = useRouter();
   const { Login, loading } = useAuth();
-  const backendUrl = process.env.BACKEND_URL || "http://localhost:5000";
+  const backendUrl = process.env.BACKEND_URL || "https://stackoverflow-clone-6cll.onrender.com";
   const [form, setform] = useState({ email: "", password: "" });
   const [requiresOTP, setRequiresOTP] = useState(false);
   const [otp, setOtp] = useState("");
