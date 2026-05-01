@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const axiosInstance = axios.create({
-  baseURL: process.env.BACKEND_URL || "https://stackoverflow-clone-6cll.onrender.com",
+  baseURL: process.env.NEXT_PUBLIC_BACKEND_URL || "https://stackoverflow-clone-6cll.onrender.com",
   headers: {
     "Content-Type": "application/json",
   },
