@@ -10,7 +10,7 @@ async function testRoleAPIs() {
     // Test 1: Get user role info (public)
     console.log('✅ Test 1: GET /api/roles/info/:userId');
     console.log('Purpose: View any user\'s role and permissions');
-    let response = await fetch('http://localhost:5000/api/roles/info/694aa62e5f6356ae18a6bd38', {
+    let response = await fetch('https://stackoverflow-clone-6cll.onrender.com/api/roles/info/694aa62e5f6356ae18a6bd38', {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     let data = await response.json();
@@ -22,7 +22,7 @@ async function testRoleAPIs() {
     // Test 2: List all users with roles (admin-only)
     console.log('✅ Test 2: GET /api/roles/list (Admin only)');
     console.log('Purpose: View all users organized by role');
-    response = await fetch('http://localhost:5000/api/roles/list', {
+    response = await fetch('https://stackoverflow-clone-6cll.onrender.com/api/roles/list', {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     data = await response.json();
@@ -45,7 +45,7 @@ async function testRoleAPIs() {
       
       // Assign moderator role
       console.log('\n📝 Assigning "moderator" role...');
-      response = await fetch(`http://localhost:5000/api/roles/assign/${testUserId}`, {
+      response = await fetch(`https://stackoverflow-clone-6cll.onrender.com/api/roles/assign/${testUserId}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -60,7 +60,7 @@ async function testRoleAPIs() {
 
       // Verify the role change
       console.log('📋 Verifying role change...');
-      response = await fetch(`http://localhost:5000/api/roles/info/${testUserId}`, {
+      response = await fetch(`https://stackoverflow-clone-6cll.onrender.com/api/roles/info/${testUserId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       data = await response.json();

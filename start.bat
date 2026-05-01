@@ -26,7 +26,7 @@ echo ========================================
 echo ✅ Servers are starting!
 echo ========================================
 echo.
-echo Backend:  http://localhost:5000
+echo Backend:  https://stackoverflow-clone-6cll.onrender.com
 echo Frontend: http://localhost:3000
 echo.
 echo Press any key to close this window...

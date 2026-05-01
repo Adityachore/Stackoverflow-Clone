@@ -8,7 +8,7 @@ async function testRoleAPIs() {
 
     // Test 1: Get user role info
     console.log('Test 1: GET /api/roles/info/:userId');
-    let response = await fetch('http://localhost:5000/api/roles/info/694aa62e5f6356ae18a6bd38', {
+    let response = await fetch('https://stackoverflow-clone-6cll.onrender.com/api/roles/info/694aa62e5f6356ae18a6bd38', {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     let data = await response.json();
@@ -18,7 +18,7 @@ async function testRoleAPIs() {
 
     // Test 2: List all users with roles (admin-only)
     console.log('Test 2: GET /api/roles/list (Admin only)');
-    response = await fetch('http://localhost:5000/api/roles/list', {
+    response = await fetch('https://stackoverflow-clone-6cll.onrender.com/api/roles/list', {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     data = await response.json();

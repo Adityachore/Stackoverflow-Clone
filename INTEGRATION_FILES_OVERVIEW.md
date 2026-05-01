@@ -231,7 +231,7 @@ node seedStackOverflow.js
 
 ### Check Backend
 ```bash
-curl http://localhost:5000/stackoverflow/status
+curl https://stackoverflow-clone-6cll.onrender.com/stackoverflow/status
 ```
 
 ---

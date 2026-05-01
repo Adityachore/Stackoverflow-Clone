@@ -7,7 +7,7 @@ async function testFriendRequestAPI() {
 
     // Test 1: Get all users first
     console.log('Step 1: Getting all users...');
-    let response = await fetch('http://localhost:5000/user/getallusers');
+    let response = await fetch('https://stackoverflow-clone-6cll.onrender.com/user/getallusers');
     let data = await response.json();
     
     console.log('API Response structure:', Object.keys(data));
@@ -30,7 +30,7 @@ async function testFriendRequestAPI() {
     
     // Test 2: Check current pending requests for User B
     console.log('Step 2: Checking pending requests for User B...');
-    response = await fetch('http://localhost:5000/api/friends/requests/pending', {
+    response = await fetch('https://stackoverflow-clone-6cll.onrender.com/api/friends/requests/pending', {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     data = await response.json();

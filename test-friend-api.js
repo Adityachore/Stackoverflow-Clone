@@ -7,7 +7,7 @@ async function testFriendRequestAPI() {
 
     // Test 1: Get all users first
     console.log('Step 1: Getting all users...');
-    let response = await fetch('http://localhost:5000/auth/getalluser');
+    let response = await fetch('https://stackoverflow-clone-6cll.onrender.com/auth/getalluser');
     let data = await response.json();
     
     if (!data.data || data.data.length < 2) {
@@ -23,7 +23,7 @@ async function testFriendRequestAPI() {
     
     // Test 2: Check current pending requests for User B
     console.log('Step 2: Checking pending requests for User B...');
-    response = await fetch('http://localhost:5000/api/friends/requests/pending', {
+    response = await fetch('https://stackoverflow-clone-6cll.onrender.com/api/friends/requests/pending', {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     data = await response.json();
@@ -31,7 +31,7 @@ async function testFriendRequestAPI() {
     
     // Test 3: Send friend request from User A to User B
     console.log(`Step 3: User A (${userA.name}) sends friend request to User B (${userB.name})...`);
-    response = await fetch(`http://localhost:5000/api/friends/request/${userB._id}`, {
+    response = await fetch(`https://stackoverflow-clone-6cll.onrender.com/api/friends/request/${userB._id}`, {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -44,7 +44,7 @@ async function testFriendRequestAPI() {
     
     // Test 4: View pending requests
     console.log('Step 4: Checking User B\'s pending requests...');
-    response = await fetch('http://localhost:5000/api/friends/requests/pending', {
+    response = await fetch('https://stackoverflow-clone-6cll.onrender.com/api/friends/requests/pending', {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     data = await response.json();
@@ -55,7 +55,7 @@ async function testFriendRequestAPI() {
     
     // Test 5: Accept friend request
     console.log(`Step 5: User B accepts the friend request from User A...`);
-    response = await fetch(`http://localhost:5000/api/friends/accept/${userA._id}`, {
+    response = await fetch(`https://stackoverflow-clone-6cll.onrender.com/api/friends/accept/${userA._id}`, {
       method: 'PUT',
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -68,7 +68,7 @@ async function testFriendRequestAPI() {
     
     // Test 6: Verify they are now friends
     console.log('Step 6: Verifying they are now friends...');
-    response = await fetch('http://localhost:5000/api/friends/list', {
+    response = await fetch('https://stackoverflow-clone-6cll.onrender.com/api/friends/list', {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     data = await response.json();

@@ -274,7 +274,7 @@ This populates MongoDB with 50 real SO questions + 100 tags.
 **"No tag suggestions appearing"**
 - Check browser console for errors
 - Verify API key in `server/.env`
-- Test: `curl http://localhost:5000/stackoverflow/autocomplete-tags?q=java`
+- Test: `curl https://stackoverflow-clone-6cll.onrender.com/stackoverflow/autocomplete-tags?q=java`
 
 **"Search returns empty"**
 - This is expected for very specific queries with 0 results

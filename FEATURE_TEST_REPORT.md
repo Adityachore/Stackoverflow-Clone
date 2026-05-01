@@ -16,7 +16,7 @@
 ### Frontend Configuration
 - ✅ **Next.js**: Running on port 3000
 - ✅ **React**: Fully functional with TypeScript support
-- ✅ **API Client**: Axios configured to connect to http://localhost:5000
+- ✅ **API Client**: Axios configured to connect to https://stackoverflow-clone-6cll.onrender.com
 - ✅ **Authentication**: JWT token handling via localStorage
 
 ---
@@ -32,7 +32,7 @@
   - Stack Overflow API integration: 20 questions from Stack Overflow
   - Comments system: Available in API
   
-**Sample API Response (http://localhost:5000/question/getallquestion)**:
+**Sample API Response (https://stackoverflow-clone-6cll.onrender.com/question/getallquestion)**:
 ```json
 {
   "data": [
@@ -248,13 +248,13 @@
 ### For API Testing:
 ```bash
 # Get all questions
-curl http://localhost:5000/question/getallquestion
+curl https://stackoverflow-clone-6cll.onrender.com/question/getallquestion
 
 # Get all tags
-curl http://localhost:5000/question/getalltags
+curl https://stackoverflow-clone-6cll.onrender.com/question/getalltags
 
 # Test server health
-curl http://localhost:5000/
+curl https://stackoverflow-clone-6cll.onrender.com/
 ```
 
 ---

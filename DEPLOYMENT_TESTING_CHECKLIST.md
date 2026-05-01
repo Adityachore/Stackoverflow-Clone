@@ -79,7 +79,7 @@ Expected Response:
 
 **Test Steps (Outside Window):**
 ```bash
-curl -X POST http://localhost:5000/subscription/create-order \
+curl -X POST https://stackoverflow-clone-6cll.onrender.com/subscription/create-order \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -d '{"plan": "bronze"}'

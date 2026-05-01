@@ -331,16 +331,16 @@ export const acceptFriendRequest = async (req, res) => {
 
 ```bash
 # 1. Send friend request from User A to User B
-curl -X POST http://localhost:5000/api/friends/request/{userB_id} \
-  -H "Authorization: Bearer {user_a_token}"
+curl -X POST https://stackoverflow-clone-6cll.onrender.com/api/friends/request/{userB_id} \
+  -H "Authorization: Bearer YOUR_TOKEN"
 
 # 2. User B accepts the request
-curl -X PUT http://localhost:5000/api/friends/accept/{userA_id} \
-  -H "Authorization: Bearer {user_b_token}"
+curl -X PUT https://stackoverflow-clone-6cll.onrender.com/api/friends/accept/{userA_id} \
+  -H "Authorization: Bearer YOUR_TOKEN"
 
 # 3. User B views their friends
-curl http://localhost:5000/api/friends/list \
-  -H "Authorization: Bearer {user_b_token}"
+curl https://stackoverflow-clone-6cll.onrender.com/api/friends/list \
+  -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 ---
