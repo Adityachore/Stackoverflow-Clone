@@ -121,7 +121,7 @@ export default function TransferPointsPage() {
 
         setTransferring(true);
         try {
-            const response = await transferPoints(selectedRecipient._id, {
+            await transferPoints(selectedRecipient._id, {
                 points: parseInt(pointsToTransfer)
             });
 
@@ -271,9 +271,12 @@ export default function TransferPointsPage() {
                                                                     {u.name?.[0]?.toUpperCase() || 'U'}
                                                                 </div>
                                                                 <div>
-                                                                    <p className="font-medium text-gray-900 dark:text-white">{u.name}</p>\n                                                                    <p className="text-sm text-gray-500 dark:text-gray-400">{u.email}</p>
+                                                                    <p className="font-medium text-gray-900 dark:text-white">{u.name}</p>
+                                                                    <p className="text-sm text-gray-500 dark:text-gray-400">{u.email}</p>
                                                                 </div>
-                                                            </div>\n                                                            <Award className="w-4 h-4 text-yellow-500" />\n                                                        </div>
+                                                            </div>
+                                                            <Award className="w-4 h-4 text-yellow-500" />
+                                                        </div>
                                                     </button>
                                                 ))
                                             )}
@@ -297,7 +300,9 @@ export default function TransferPointsPage() {
                                             <button
                                                 onClick={() => setSelectedRecipient(null)}
                                                 className="text-blue-600 hover:text-blue-700 font-medium text-sm"
-                                            >\n                                                Change\n                                            </button>
+                                            >
+                                                Change
+                                            </button>
                                         </div>
                                     </div>
                                 )}
@@ -381,7 +386,83 @@ export default function TransferPointsPage() {
                                             <CheckCircle className="w-4 h-4 text-blue-600" />
                                         </div>
                                         <div>
-                                            <p className="font-medium text-gray-900 dark:text-white\">Select a Recipient</p>
-                                            <p className="text-gray-500 dark:text-gray-400\">Find another user to send points to</p>
+                                            <p className="font-medium text-gray-900 dark:text-white">Select a Recipient</p>
+                                            <p className="text-gray-500 dark:text-gray-400">Find another user to send points to</p>
                                         </div>
-                                    </div>\n                                    <div className=\"flex items-start gap-3\">\n                                        <div className=\"w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 bg-purple-100 dark:bg-purple-900/30\">\n                                            <CheckCircle className=\"w-4 h-4 text-purple-600\" />\n                                        </div>\n                                        <div>\n                                            <p className=\"font-medium text-gray-900 dark:text-white\">Enter Amount</p>\n                                            <p className=\"text-gray-500 dark:text-gray-400\">Transfer 1 to {maxTransferable} points</p>\n                                        </div>\n                                    </div>\n                                </div>\n                            </div>\n\n                            {/* How to Earn Points */}\n                            <div className=\"bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-2xl shadow-lg p-6 border border-yellow-200 dark:border-yellow-800\">\n                                <h3 className=\"font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2\">\n                                    <TrendingUp className=\"w-5 h-5 text-yellow-500\" />\n                                    Earn Points\n                                </h3>\n                                <div className=\"space-y-2 text-sm text-gray-700 dark:text-gray-300\">\n                                    <p>• Post an answer: <strong>5 pts</strong></p>\n                                    <p>• Get 5 upvotes: <strong>+5 pts</strong></p>\n                                    <p>• Answer removed: <strong>-5 pts</strong></p>\n                                    <p>• Answer downvoted: <strong>-2 pts</strong></p>\n                                </div>\n                            </div>\n                        </div>\n                    </div>\n\n                    {/* Confirmation Modal */}\n                    {showConfirmation && selectedRecipient && (\n                        <div className=\"fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50\">\n                            <div className=\"bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-8 animate-in\">\n                                <h3 className=\"text-xl font-bold text-gray-900 dark:text-white mb-4\">Confirm Transfer</h3>\n                                \n                                <div className=\"bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 mb-6 space-y-3\">\n                                    <div className=\"flex justify-between\">\n                                        <span className=\"text-gray-600 dark:text-gray-400\">From:</span>\n                                        <span className=\"font-semibold text-gray-900 dark:text-white\">{user.name}</span>\n                                    </div>\n                                    <div className=\"flex justify-between\">\n                                        <span className=\"text-gray-600 dark:text-gray-400\">To:</span>\n                                        <span className=\"font-semibold text-gray-900 dark:text-white\">{selectedRecipient.name}</span>\n                                    </div>\n                                    <div className=\"flex justify-between\">\n                                        <span className=\"text-gray-600 dark:text-gray-400\">Amount:</span>\n                                        <span className=\"font-bold text-lg text-purple-600 dark:text-purple-400\">{pointsToTransfer} pts</span>\n                                    </div>\n                                </div>\n                                \n                                <p className=\"text-sm text-gray-600 dark:text-gray-400 mb-6\">\n                                    This action cannot be undone. Make sure the recipient is correct.\n                                </p>\n                                \n                                <div className=\"flex gap-3\">\n                                    <button\n                                        onClick={() => setShowConfirmation(false)}\n                                        className=\"flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700\"\n                                    >\n                                        Cancel\n                                    </button>\n                                    <button\n                                        onClick={handleTransfer}\n                                        disabled={transferring}\n                                        className=\"flex-1 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed\"\n                                    >\n                                        {transferring ? 'Transferring...' : 'Confirm'}\n                                    </button>\n                                </div>\n                            </div>\n                        </div>\n                    )}\n                </div>\n            </div>\n        </Mainlayout>\n    );\n}\n
+                                    </div>
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 bg-purple-100 dark:bg-purple-900/30">
+                                            <CheckCircle className="w-4 h-4 text-purple-600" />
+                                        </div>
+                                        <div>
+                                            <p className="font-medium text-gray-900 dark:text-white">Enter Amount</p>
+                                            <p className="text-gray-500 dark:text-gray-400">Transfer 1 to {maxTransferable} points</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* How to Earn Points */}
+                            <div className="bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-2xl shadow-lg p-6 border border-yellow-200 dark:border-yellow-800">
+                                <h3 className="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                                    <TrendingUp className="w-5 h-5 text-yellow-500" />
+                                    Earn Points
+                                </h3>
+                                <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                                    <p>• Post an answer: <strong>5 pts</strong></p>
+                                    <p>• Get 5 upvotes: <strong>+5 pts</strong></p>
+                                    <p>• Answer removed: <strong>-5 pts</strong></p>
+                                    <p>• Answer downvoted: <strong>-2 pts</strong></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Confirmation Modal */}
+                    {showConfirmation && selectedRecipient && (
+                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+                            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-8 animate-in">
+                                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Confirm Transfer</h3>
+                                
+                                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 mb-6 space-y-3">
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-600 dark:text-gray-400">From:</span>
+                                        <span className="font-semibold text-gray-900 dark:text-white">{user.name}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-600 dark:text-gray-400">To:</span>
+                                        <span className="font-semibold text-gray-900 dark:text-white">{selectedRecipient.name}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-600 dark:text-gray-400">Amount:</span>
+                                        <span className="font-bold text-lg text-purple-600 dark:text-purple-400">{pointsToTransfer} pts</span>
+                                    </div>
+                                </div>
+                                
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                                    This action cannot be undone. Make sure the recipient is correct.
+                                </p>
+                                
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setShowConfirmation(false)}
+                                        className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={handleTransfer}
+                                        disabled={transferring}
+                                        className="flex-1 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {transferring ? 'Transferring...' : 'Confirm'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </Mainlayout>
+    );
+}
