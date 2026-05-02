@@ -24,7 +24,7 @@ const app = express();
 const corsOptions = {
   origin: process.env.CORS_ORIGIN 
     ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
-    : ['https://stack-clone-elevance.netlify.app'],
+    : ['http://localhost:3000', 'https://stack-clone-elevance.netlify.app', /\.vercel\.app$/],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
