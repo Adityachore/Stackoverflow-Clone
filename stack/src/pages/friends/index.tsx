@@ -429,6 +429,25 @@ const FriendsPage = () => {
                         </div>
                     </div>
 
+                    {/* Subscription Banner */}
+                    <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl p-6 mb-6 text-white flex flex-col md:flex-row items-center justify-between shadow-lg">
+                        <div>
+                            <h3 className="text-xl font-bold mb-1 flex items-center gap-2">
+                                <Sparkles className="w-5 h-5 text-yellow-300" /> 
+                                Upgrade to Premium
+                            </h3>
+                            <p className="text-purple-100 text-sm">
+                                Unlock unlimited friend connections, unlimited daily posts, and exclusive developer badges!
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => router.push('/subscription')}
+                            className="mt-4 md:mt-0 px-6 py-2.5 bg-white text-purple-600 hover:bg-gray-50 font-semibold rounded-lg shadow transition-colors whitespace-nowrap"
+                        >
+                            View Plans
+                        </button>
+                    </div>
+
                     {/* Stats Cards */}
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                         {[

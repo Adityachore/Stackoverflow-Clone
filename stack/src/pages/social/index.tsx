@@ -558,13 +558,10 @@ const SocialFeed = () => {
         try {
             let finalMediaUrl = mediaUrl;
             
-            // If a local file is selected, convert to base64 and use it
             if (selectedFile) {
                 setUploadProgress(30);
                 const base64Data = await fileToBase64(selectedFile);
                 setUploadProgress(60);
-                // For now, we'll send the base64 directly
-                // In production, you'd upload to a server/cloud storage
                 finalMediaUrl = base64Data;
                 setUploadProgress(100);
             }
@@ -576,8 +573,15 @@ const SocialFeed = () => {
             setUploadProgress(0);
             fetchFeed(); // Refresh
         } catch (err: any) {
-            toast.error(err.response?.data?.message || "Failed to create post. Check your friend limits.");
             setUploadProgress(0);
+            if (err.response?.status === 403) {
+                toast.error("Daily posting limit reached! Redirecting to Subscription to upgrade...");
+                setTimeout(() => {
+                    router.push('/subscription');
+                }, 2000);
+            } else {
+                toast.error(err.response?.data?.message || "Failed to create post.");
+            }
         } finally {
             setIsPosting(false);
         }
