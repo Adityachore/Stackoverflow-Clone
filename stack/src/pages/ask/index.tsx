@@ -81,7 +81,16 @@ const index = () => {
       }
     } catch (error: any) {
       console.log(error);
-      toast.error(error.response?.data?.message || "Something went wrong");
+      const errorMessage = error.response?.data?.message || "Something went wrong";
+      
+      if (error.response?.status === 403 && errorMessage.includes("limit reached")) {
+        toast.warning("Daily question limit reached! Redirecting to subscription plans...", { autoClose: 3000 });
+        setTimeout(() => {
+            router.push("/subscription");
+        }, 2000);
+      } else {
+        toast.error(errorMessage);
+      }
     }
   };
   const handleAddTag = (e: any) => {

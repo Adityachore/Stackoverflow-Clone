@@ -353,3 +353,35 @@ export const addAnswerComment = async (req, res) => {
     res.status(500).json({ message: "Something went wrong" });
   }
 };
+
+// AI Assist Search
+export const aiSearch = async (req, res) => {
+  const { query } = req.body;
+  if (!query) {
+    return res.status(400).json({ message: "Query is required" });
+  }
+
+  try {
+    // Basic text search using regex on title and body
+    // Split query into words and create regex for each
+    const words = query.split(' ').filter(w => w.length > 2);
+    if (words.length === 0) {
+      return res.status(200).json({ results: [] });
+    }
+
+    const regexArray = words.map(word => new RegExp(word, 'i'));
+
+    const questions = await question.find({
+      $or: [
+        { questiontitle: { $in: regexArray } },
+        { questionbody: { $in: regexArray } },
+        { questiontags: { $in: regexArray } }
+      ]
+    }).limit(3).lean(); // get top 3 matches
+
+    res.status(200).json({ results: questions });
+  } catch (error) {
+    console.log("AI Search error:", error);
+    res.status(500).json({ message: "Search failed" });
+  }
+};
