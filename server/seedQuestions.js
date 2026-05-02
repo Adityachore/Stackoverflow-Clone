@@ -57,9 +57,9 @@ const dummyQuestions = [
 
 const seedDB = async () => {
   try {
-    const URL = process.env.CONNECTION_URL;
+    const URL = process.env.MONGODB_URL || process.env.MONGODB_URI || process.env.CONNECTION_URL;
     if (!URL) {
-      console.log("Error: CONNECTION_URL is not set in .env");
+      console.log("Error: MongoDB URL is not set in .env (tried MONGODB_URL, MONGODB_URI, CONNECTION_URL)");
       process.exit(1);
     }
     
