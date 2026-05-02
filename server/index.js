@@ -20,11 +20,25 @@ import followroutes from "./routes/follow.js"
 
 const app = express();
 
-// Security: Configure CORS with whitelist
+// Security: Configure CORS with dynamic origin checker
+const ALLOWED_ORIGINS = [
+  'http://localhost:3000',
+  'https://stackoverflow-clone-e7dp.vercel.app',
+  ...(process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',').map(o => o.trim()) : [])
+];
+
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN 
-    ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
-    : ['http://localhost:3000', 'https://stack-clone-elevance.netlify.app', /\.vercel\.app$/],
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, Postman)
+    if (!origin) return callback(null, true);
+    // Allow any vercel.app preview/production URL
+    if (origin.endsWith('.vercel.app')) return callback(null, true);
+    // Allow any origin in the whitelist
+    if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+    // Block everything else
+    console.warn(`CORS blocked: ${origin}`);
+    return callback(new Error(`CORS policy: origin ${origin} not allowed`));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
