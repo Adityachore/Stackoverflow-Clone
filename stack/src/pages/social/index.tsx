@@ -294,7 +294,7 @@ const PostItem = ({ post, currentUser, handleLike, handleComment, handleShare }:
                     <button onClick={() => setShowComments(!showComments)} className="hover:text-blue-500 transition-colors">
                         {post.comments?.length || 0} comments
                     </button>
-                    <span>{post.shares?.length || 0} shares</span>
+                    <span>{post.sharedCount || 0} shares</span>
                 </div>
             </div>
 

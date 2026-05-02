@@ -5,13 +5,17 @@ import Razorpay from 'razorpay';
 let razorpayInstance = null;
 let isInitialized = false;
 
+// Module-level key references (set during initialization)
+let RAZORPAY_KEY_ID = null;
+let RAZORPAY_KEY_SECRET = null;
+
 // Initialize function to be called after dotenv.config()
 export function initializePaymentService() {
     if (isInitialized) return;
     isInitialized = true;
     
-    const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID;
-    const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
+    RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID;
+    RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
 
     // Debug: Log what we received
     console.log('[Payment Service] Debug - RAZORPAY_KEY_ID:', RAZORPAY_KEY_ID ? '✓ Set' : '✗ Not set');

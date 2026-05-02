@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 const postSchema = mongoose.Schema({
-    userId: { type: String, required: true },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "user", required: true },
     name: { type: String, required: true },
     description: { type: String, required: true },
     mediaUrl: { type: String, default: "" }, // For images/videos

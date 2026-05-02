@@ -81,6 +81,7 @@ export const getFeed = async (req, res) => {
             const allowedUserIds = [userId, ...friendIds];
 
             const posts = await Post.find({ userId: { $in: allowedUserIds } })
+                .populate('userId', 'name avatar reputation')
                 .sort({ createdAt: -1 });
             
             return res.status(200).json(posts);

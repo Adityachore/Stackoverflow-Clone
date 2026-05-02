@@ -62,6 +62,16 @@ const SubscriptionPage = () => {
         if (user) fetchStatus();
     }, [user]);
 
+    const loadRazorpayScript = () => {
+        return new Promise((resolve) => {
+            const script = document.createElement("script");
+            script.src = "https://checkout.razorpay.com/v1/checkout.js";
+            script.onload = () => resolve(true);
+            script.onerror = () => resolve(false);
+            document.body.appendChild(script);
+        });
+    };
+
     const handleSubscribe = async (planId: string) => {
         if (planId === 'free') {
             toast.info("You are already on the Free plan.");
@@ -75,19 +85,82 @@ const SubscriptionPage = () => {
 
         setLoading(true);
         try {
-            const { data } = await subscribe({ plan: planId });
-            toast.success(data.message);
-            setCurrentPlan(planId);
-            setSubscriptionStatus(data);
+            // 1. Create order on backend
+            const { data: orderData } = await createSubscriptionOrder({ plan: planId });
+            
+            // 2. Load Razorpay script
+            const res = await loadRazorpayScript();
+            if (!res) {
+                toast.error("Razorpay SDK failed to load. Are you online?");
+                setLoading(false);
+                return;
+            }
+
+            // 3. Open Razorpay Checkout
+            const options = {
+                key: orderData.keyId,
+                amount: orderData.amount,
+                currency: orderData.currency,
+                name: "StackOverflow Clone",
+                description: `${planId.toUpperCase()} Plan Subscription`,
+                order_id: orderData.orderId,
+                handler: async (response: any) => {
+                    try {
+                        setLoading(true);
+                        // 4. Verify payment on backend
+                        const { data: verifyData } = await subscribe({
+                            plan: planId,
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature
+                        });
+                        
+                        toast.success(verifyData.message);
+                        setCurrentPlan(planId);
+                        setSubscriptionStatus(verifyData);
+                    } catch (err: any) {
+                        toast.error(err.response?.data?.message || "Payment verification failed.");
+                    } finally {
+                        setLoading(false);
+                    }
+                },
+                prefill: {
+                    name: user.name,
+                    email: user.email,
+                },
+                theme: {
+                    color: "#f48024",
+                },
+                modal: {
+                    ondismiss: () => {
+                        setLoading(false);
+                    }
+                }
+            };
+
+            const paymentObject = new (window as any).Razorpay(options);
+            paymentObject.open();
+
         } catch (err: any) {
             const message = err.response?.data?.message || "Subscription failed.";
             if (message.includes("10:00 AM")) {
                 toast.error(`⏰ ${message}`);
+            } else if (message.includes("keys not configured")) {
+                // Fallback for mock payment if backend is in mock mode
+                try {
+                    const { data } = await subscribe({ plan: planId });
+                    toast.success(data.message + " (Mock Payment)");
+                    setCurrentPlan(planId);
+                    setSubscriptionStatus(data);
+                } catch (mockErr: any) {
+                    toast.error(mockErr.response?.data?.message || "Mock subscription failed.");
+                }
             } else {
                 toast.error(message);
             }
         } finally {
-            setLoading(false);
+            // Loading is handled by handler or ondismiss
+            if (planId === 'free') setLoading(false); 
         }
     };
 
