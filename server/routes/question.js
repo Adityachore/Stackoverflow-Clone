@@ -55,10 +55,94 @@ router.get("/seed-mock-data", async (req, res) => {
         noofanswer: 0,
         views: 45,
         askedon: new Date()
+      },
+      {
+        questiontitle: "How to handle Stripe webhooks in Node.js safely?",
+        questionbody: "I'm integrating payments and I need to listen to Stripe webhooks to update user subscription status. How do I verify the webhook signature properly in an Express route? I'm getting a raw body error right now.",
+        questiontags: ["nodejs", "stripe", "webhooks", "express"],
+        userposted: "FinTech Guru",
+        userid: "661234567890123456789015",
+        upvote: ["1", "2"],
+        downvote: ["3", "4"],
+        noofanswer: 1,
+        views: 210,
+        askedon: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000)
+      },
+      {
+        questiontitle: "Why does my Next.js app crash on build with 'document is not defined'?",
+        questionbody: "Everything works perfectly in development when I run npm run dev. But when I try to run npm run build, it crashes saying ReferenceError: document is not defined. I'm using a third-party slider library if that matters.",
+        questiontags: ["nextjs", "react", "ssr", "javascript"],
+        userposted: "NextJS Newbie",
+        userid: "661234567890123456789016",
+        upvote: ["1", "2", "3", "4"],
+        downvote: [],
+        noofanswer: 2,
+        views: 315,
+        askedon: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)
+      },
+      {
+        questiontitle: "Best way to manage global state in React 2024?",
+        questionbody: "I'm starting a new React project and I'm debating between Redux Toolkit, Zustand, Jotai, or just using React Context. The app will be relatively complex with a lot of frequent state updates. What is the current industry standard or best practice?",
+        questiontags: ["react", "redux", "zustand", "state-management"],
+        userposted: "State Manager",
+        userid: "661234567890123456789017",
+        upvote: ["1", "2", "3", "4", "5", "6"],
+        downvote: ["1", "2"],
+        noofanswer: 5,
+        views: 1024,
+        askedon: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000)
+      },
+      {
+        questiontitle: "How to fix MongoDB 'connection pool exhausted' error?",
+        questionbody: "My Node.js backend using Mongoose keeps crashing after running for a few hours. The logs say 'MongoTimeoutError: Server selection timed out after 30000 ms' and it mentions the connection pool might be exhausted. How do I fix this?",
+        questiontags: ["mongodb", "mongoose", "nodejs", "database"],
+        userposted: "Backend Bob",
+        userid: "661234567890123456789018",
+        upvote: ["1", "2", "3"],
+        downvote: [],
+        noofanswer: 1,
+        views: 89,
+        askedon: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)
+      },
+      {
+        questiontitle: "Understanding Python decorators with arguments",
+        questionbody: "I know how to write a simple Python decorator without arguments, but when I try to pass an argument to the decorator itself (like @retry(times=3)), my brain melts. Can someone explain the three-level nested function structure?",
+        questiontags: ["python", "decorators", "functions"],
+        userposted: "Py Learner",
+        userid: "661234567890123456789019",
+        upvote: ["1", "2", "3", "4", "5", "6", "7"],
+        downvote: [],
+        noofanswer: 3,
+        views: 450,
+        askedon: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+      },
+      {
+        questiontitle: "Docker container immediately exits after starting",
+        questionbody: "I built a Docker image for my Node app using a standard Dockerfile. It builds successfully, but when I run docker run, the container starts and then immediately exits with code 0. It works fine locally outside of Docker.",
+        questiontags: ["docker", "nodejs", "containers", "deployment"],
+        userposted: "DevOps Dan",
+        userid: "661234567890123456789020",
+        upvote: ["1", "2"],
+        downvote: ["1"],
+        noofanswer: 2,
+        views: 220,
+        askedon: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000)
+      },
+      {
+        questiontitle: "What exactly is a memory leak in JavaScript?",
+        questionbody: "I hear people talking about memory leaks in React and JavaScript. Since JS is garbage collected, how can memory actually leak? What are the most common patterns that cause this and how do I profile it in Chrome DevTools?",
+        questiontags: ["javascript", "memory-management", "debugging", "react"],
+        userposted: "JS Guru",
+        userid: "661234567890123456789021",
+        upvote: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
+        downvote: [],
+        noofanswer: 4,
+        views: 1500,
+        askedon: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000)
       }
     ];
     await question.insertMany(dummyQuestions);
-    res.status(200).json({ message: "Successfully seeded 3 questions into the database!" });
+    res.status(200).json({ message: "Successfully seeded 10 questions into the database!" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
